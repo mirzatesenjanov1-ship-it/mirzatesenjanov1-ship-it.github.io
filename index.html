@@ -23,7 +23,7 @@
         #leaderboard-screen { display: none; z-index: 4000; }
         .game-area {
             position: relative; width: 100%; height: 40vh;
-            background: #ffffff; border-bottom: 2px solid #f0f0f0; overflow: hidden;
+            background: #ffffff; border-bottom: 2px solid #f0f0f0; overflow: visible; /* Эмоция чыгышы үчүн overflow visible кылынды */
         }
         .rider {
             position: absolute; bottom: 10px; width: 25%; max-width: 155px;
@@ -31,26 +31,27 @@
         }
         .rider video { width: 100%; display: block; }
         
-        /* ЭМОЦИЯЛАР ҮЧҮН ОҢДОЛГОН СТИЛЬ */
+        /* ЭМОЦИЯЛАРДЫ КААРМАНДЫН БАШЫНА ЧЫГАРУУ */
         .emoji-bubble {
             position: absolute; 
-            top: -60px; /* Башынан өйдө чыгаруу */
+            top: -80px; /* Башынан өйдө көтөрүү */
             left: 50%; 
             transform: translateX(-50%);
             background: white; 
             border-radius: 50%; 
-            padding: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
-            font-size: 35px; /* Чоңураак кылдык */
-            z-index: 9999 !important; /* Баарынан алдыда */
+            padding: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4); 
+            font-size: 40px; /* Чоңураак эффект */
+            z-index: 9999 !important; /* Баарынан алдыга чыгаруу */
             pointer-events: none;
             animation: floatUp 1.5s ease-out forwards;
+            white-space: nowrap;
         }
         
         @keyframes floatUp {
-            0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            0% { opacity: 0; transform: translateX(-50%) translateY(30px); }
             20% { opacity: 1; transform: translateX(-50%) translateY(0); }
-            100% { opacity: 0; transform: translateX(-50%) translateY(-70px); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-80px); }
         }
 
         .quiz-area {
@@ -247,7 +248,6 @@
         });
     }
 
-    // ЧАТТЫН ТУУРА ИШТӨӨСҮ ҮЧҮН ОҢДОЛГОН ЛОГИКА
     function listenToChat() {
         db.ref('game_session/chat').limitToLast(1).on('child_added', (snap) => {
             const data = snap.val();
@@ -255,7 +255,7 @@
                 const container = document.getElementById(data.role + '-chat');
                 if (container) {
                     container.innerHTML = `<div class="emoji-bubble">${data.msg}</div>`;
-                    setTimeout(() => container.innerHTML = "", 1500);
+                    setTimeout(() => { container.innerHTML = ""; }, 1500);
                 }
             }
         });
