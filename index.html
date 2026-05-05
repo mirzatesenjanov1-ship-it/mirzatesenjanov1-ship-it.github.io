@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <html lang="ky">
 <head>
-    <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1495571814896964"
-     crossorigin="anonymous"></script> -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Кыз Куумай: Физика Online</title>
 
-    <!-- Google AdSense -->
+    <!-- Google AdSense - Негизги скрипт бир гана жолу ушул жерде болушу керек -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1495571814896964" crossorigin="anonymous"></script>
 
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
@@ -55,7 +54,13 @@
         .btn.wrong { background: #e74c3c !important; color: white; border-color: #e74c3c; }
         .chat-panel { display: flex; gap: 10px; margin-top: 15px; }
         .emoji-btn { font-size: 24px; background: #f0f0f0; border: none; border-radius: 50%; width: 45px; height: 45px; }
-        #ad-box { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; color: white; padding: 20px; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        
+        /* Ad-box стили */
+        #ad-box { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; 
+            color: white; padding: 20px; display: none; flex-direction: column; 
+            align-items: center; justify-content: center; text-align: center; 
+        }
         .ad-container { width: 100%; max-width: 320px; margin: 10px 0; min-height: 100px; }
     </style>
 </head>
@@ -65,26 +70,35 @@
 
 <div id="ad-box">
     <h2 style="color: #e67e22;">🚀 Билимиңди тереңдет!</h2>
-    <button onclick="window.open('https://boosty.to/astrophysica')" style="padding:15px 30px; background:#e67e22; border:none; border-radius:10px; color:white; font-weight:bold;">КУРСТАРГА ЖАЗЫЛУУ</button>
+    <p>Физика курстарына жазылып, жогорку упай топтоңуз.</p>
+    <button onclick="window.open('https://boosty.to/astrophysica')" style="padding:15px 30px; background:#e67e22; border:none; border-radius:10px; color:white; font-weight:bold; cursor:pointer;">КУРСТАРГА ЖАЗЫЛУУ</button>
 </div>
 
 <div id="setup-screen">
     <h1>Кыз Куумай: Физика</h1>
+    
+    <!-- Башкы беттеги жарнама блогу -->
     <div class="ad-container">
-        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-1495571814896964" data-ad-slot="3193900890" data-ad-format="auto" data-full-width-responsive="true"></ins>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-1495571814896964"
+             data-ad-slot="3193900890"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
         <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </div>
-    <input type="text" id="player-name" placeholder="Атыңызды жазыңыз" style="padding:15px; border-radius:10px; width:220px; margin-bottom:20px;">
+
+    <input type="text" id="player-name" placeholder="Атыңызды жазыңыз" style="padding:15px; border-radius:10px; width:220px; margin-bottom:20px; border:1px solid #ccc;">
     <div>
-        <button onclick="chooseRole('boy')" style="background:#2980b9; color:white; padding:15px 30px; border-radius:30px; border:none; font-weight:bold;">ЖИГИТ</button>
-        <button onclick="chooseRole('girl')" style="background:#e67e22; color:white; padding:15px 30px; border-radius:30px; border:none; font-weight:bold;">КЫЗ</button>
+        <button onclick="chooseRole('boy')" style="background:#2980b9; color:white; padding:15px 30px; border-radius:30px; border:none; font-weight:bold; cursor:pointer;">ЖИГИТ</button>
+        <button onclick="chooseRole('girl')" style="background:#e67e22; color:white; padding:15px 30px; border-radius:30px; border:none; font-weight:bold; cursor:pointer;">КЫЗ</button>
     </div>
 </div>
 
 <div id="leaderboard-screen">
     <h2>🏆 Лидерлер тактасы</h2>
     <table id="leader-body" style="width:100%; max-width:300px; border-collapse:collapse;"></table>
-    <button onclick="location.reload()" style="margin-top:20px; padding:10px 20px; background:#2ecc71; color:white; border:none; border-radius:20px;">Кайра баштоо</button>
+    <button onclick="location.reload()" style="margin-top:20px; padding:10px 20px; background:#2ecc71; color:white; border:none; border-radius:20px; cursor:pointer;">Кайра баштоо</button>
 </div>
 
 <div class="game-area">
@@ -110,12 +124,14 @@
 </div>
 
 <script>
+    // Firebase конфигурациясы
     const firebaseConfig = { databaseURL: "https://kyz-kuumay-game-default-rtdb.firebaseio.com/" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     let myRole = "", myName = "", currentQIndex = 0, score = 0;
 
+    // Суроолор базасы (кыскартылды, сиз өзүңүздүн 60 сурооңузду толук кошо бериңиз)
     const questions = [
         {q:"Ылдамдыктын формуласы?", a:["v=s/t","F=ma","P=mg","E=mc2"], c:"v=s/t"},
         {q:"Ылдамдануунун бирдиги?", a:["м/с2","м/с","кг","Н"], c:"м/с2"},
@@ -180,7 +196,9 @@
     ];
 
     function chooseRole(role) {
-        myName = document.getElementById('player-name').value || "Оюнчу";
+        const inputName = document.getElementById('player-name').value;
+        if (!inputName) { alert("Сураныч, атыңызды жазыңыз!"); return; }
+        myName = inputName;
         myRole = role;
         document.getElementById('bgMusic').play().catch(() => {});
         document.getElementById('setup-screen').style.display = 'none';
@@ -192,16 +210,20 @@
     }
 
     function renderQuestion() {
+        // Ар бир 10 суроодон кийин өзүңүздүн курстарды жарнамалоо
         if (currentQIndex > 0 && currentQIndex % 10 === 0) {
             const ad = document.getElementById('ad-box');
             ad.style.display = 'flex';
-            setTimeout(() => ad.style.display = 'none', 3000);
+            setTimeout(() => ad.style.display = 'none', 4000);
         }
+        
         if (currentQIndex >= questions.length) { finishGame(); return; }
+        
         const data = questions[currentQIndex];
         document.getElementById('q-text').innerText = data.q;
         const box = document.getElementById('options');
         box.innerHTML = "";
+        
         data.a.sort(() => Math.random() - 0.5).forEach(txt => {
             const b = document.createElement('button');
             b.className = 'btn'; b.innerText = txt;
@@ -243,13 +265,17 @@
             const data = snap.val();
             if (data) {
                 const container = document.getElementById(data.role + '-chat');
-                container.innerHTML = `<div class="emoji-bubble">${data.msg}</div>`;
-                setTimeout(() => container.innerHTML = "", 1500);
+                if (container) {
+                    container.innerHTML = `<div class="emoji-bubble">${data.msg}</div>`;
+                    setTimeout(() => container.innerHTML = "", 1500);
+                }
             }
         });
     }
 
-    function sendEmoji(emoji) { db.ref('game_session/chat').set({ role: myRole, msg: emoji, time: Date.now() }); }
+    function sendEmoji(emoji) { 
+        db.ref('game_session/chat').set({ role: myRole, msg: emoji, time: Date.now() }); 
+    }
 
     function finishGame() {
         db.ref('leaderboard').push({ name: myName, score: score });
@@ -259,10 +285,10 @@
 
     function showLeaderboard() {
         db.ref('leaderboard').orderByChild('score').limitToLast(5).once('value', snap => {
-            let html = "<tr><th>Аты</th><th>Упай</th></tr>";
+            let html = "<tr><th style='padding:10px;'>Аты</th><th style='padding:10px;'>Упай</th></tr>";
             let list = [];
             snap.forEach(c => list.push(c.val()));
-            list.reverse().forEach(u => html += `<tr><td>${u.name}</td><td>${u.score}</td></tr>`);
+            list.reverse().forEach(u => html += `<tr><td style='padding:5px;'>${u.name}</td><td style='padding:5px;'>${u.score}</td></tr>`);
             document.getElementById('leader-body').innerHTML = html;
         });
     }
