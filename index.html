@@ -5,93 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Кыз Куумай: Физика Online</title>
 
-    <!-- 1-КАДАМ: AdSense Негизги Скрипти -->
+    <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1495571814896964" crossorigin="anonymous"></script>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
     <style>
         * { box-sizing: border-box; touch-action: manipulation; }
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
             overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #ffffff;
         }
-        
         #setup-screen, #leaderboard-screen {
             position: fixed; inset: 0; background: white; z-index: 3000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             padding: 20px; text-align: center;
         }
-
         #leaderboard-screen { display: none; z-index: 4000; }
-
         .game-area {
             position: relative; width: 100%; height: 40vh;
-            background: #ffffff; border-bottom: 2px solid #f0f0f0;
-            overflow: hidden;
+            background: #ffffff; border-bottom: 2px solid #f0f0f0; overflow: hidden;
         }
-
         .rider {
-            position: absolute; bottom: 10px; width: 25%;
-            max-width: 155px;
+            position: absolute; bottom: 10px; width: 25%; max-width: 155px;
             transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .rider video { width: 100%; display: block; }
-
         .emoji-bubble {
             position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
             background: white; border-radius: 50%; padding: 5px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 20px;
             animation: floatUp 1.5s ease-out forwards;
         }
-
         @keyframes floatUp {
             0% { opacity: 0; transform: translateX(-50%) translateY(0); }
-            20% { opacity: 1; }
             100% { opacity: 0; transform: translateX(-50%) translateY(-50px); }
         }
-
         .quiz-area {
             width: 100%; height: 60vh; background: #ffffff;
-            display: flex; flex-direction: column; align-items: center; 
-            padding: 10px; overflow-y: auto;
+            display: flex; flex-direction: column; align-items: center; padding: 10px; overflow-y: auto;
         }
-
-        .question-text {
-            font-size: clamp(16px, 4vw, 20px); font-weight: bold; text-align: center;
-            min-height: 50px; margin-bottom: 15px; color: #000; padding: 0 10px;
-        }
-
-        .options-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; max-width: 500px;
-        }
-
-        .chat-panel { display: flex; gap: 10px; margin-top: 15px; }
-
-        .emoji-btn {
-            font-size: 24px; background: #f0f0f0; border: none; border-radius: 50%;
-            width: 45px; height: 45px; cursor: pointer;
-        }
-
-        .btn {
-            padding: 15px 10px; font-size: 14px; border: 1.5px solid #eee;
-            border-radius: 12px; background: #fdfdfd; cursor: pointer;
-            font-weight: 600; -webkit-tap-highlight-color: transparent;
-        }
+        .question-text { font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 15px; min-height: 50px; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; max-width: 500px; }
+        .btn { padding: 15px 10px; font-size: 14px; border: 1.5px solid #eee; border-radius: 12px; background: #fdfdfd; cursor: pointer; font-weight: 600; }
         .btn.correct { background: #2ecc71 !important; color: white; border-color: #2ecc71; }
         .btn.wrong { background: #e74c3c !important; color: white; border-color: #e74c3c; }
-
-        #ad-box {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9);
-            z-index: 5000; color: white; padding: 20px;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center;
-        }
-
-        .leader-table { width: 100%; max-width: 300px; border-collapse: collapse; margin-top: 20px; }
-        .leader-table th, .leader-table td { padding: 10px; border-bottom: 1px solid #eee; }
-        
-        .ad-container { width: 100%; max-width: 320px; margin: 15px 0; min-height: 50px; }
+        .chat-panel { display: flex; gap: 10px; margin-top: 15px; }
+        .emoji-btn { font-size: 24px; background: #f0f0f0; border: none; border-radius: 50%; width: 45px; height: 45px; }
+        #ad-box { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; color: white; padding: 20px; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .ad-container { width: 100%; max-width: 320px; margin: 10px 0; min-height: 100px; }
     </style>
 </head>
 <body>
@@ -100,60 +63,35 @@
 
 <div id="ad-box">
     <h2 style="color: #e67e22;">🚀 Билимиңди тереңдет!</h2>
-    <p style="font-size: 18px;">Физиканы толук өздөштүрүп, сертификат алгың келеби?</p>
-    <button onclick="window.open('https://boosty.to/astrophysica')" style="padding:15px 30px; background:#e67e22; border:none; border-radius:10px; color:white; font-weight:bold; cursor:pointer; font-size: 16px;">
-        КУРСТАРГА ЖАЗЫЛУУ
-    </button>
-    <br><br>
-    <p style="font-size: 12px; opacity: 0.7;">Жарнама 3 секунддан кийин жабылат...</p>
+    <button onclick="window.open('https://boosty.to/astrophysica')" style="padding:15px 30px; background:#e67e22; border:none; border-radius:10px; color:white; font-weight:bold;">КУРСТАРГА ЖАЗЫЛУУ</button>
 </div>
 
 <div id="setup-screen">
-    <h1 style="margin-bottom: 10px; font-size: 24px;">Кыз Куумай: Физика</h1>
-    
+    <h1>Кыз Куумай: Физика</h1>
     <div class="ad-container">
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-1495571814896964"
-             data-ad-slot="3193900890"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-1495571814896964" data-ad-slot="3193900890" data-ad-format="auto" data-full-width-responsive="true"></ins>
         <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </div>
-
-    <input type="text" id="player-name" placeholder="Атыңызды жазыңыз" style="padding:15px; border-radius:10px; border:1px solid #ddd; margin-bottom:20px; width:220px;">
-    <div style="display: flex; gap: 10px;">
-        <button onclick="chooseRole('boy')" style="background:#2980b9; color:white; padding:15px 30px; border:none; border-radius:30px; font-weight:bold;">ЖИГИТ</button>
-        <button onclick="chooseRole('girl')" style="background:#e67e22; color:white; padding:15px 30px; border:none; border-radius:30px; font-weight:bold;">КЫЗ</button>
+    <input type="text" id="player-name" placeholder="Атыңызды жазыңыз" style="padding:15px; border-radius:10px; width:220px; margin-bottom:20px;">
+    <div>
+        <button onclick="chooseRole('boy')" style="background:#2980b9; color:white; padding:15px 30px; border-radius:30px; border:none; font-weight:bold;">ЖИГИТ</button>
+        <button onclick="chooseRole('girl')" style="background:#e67e22; color:white; padding:15px 30px; border-radius:30px; border:none; font-weight:bold;">КЫЗ</button>
     </div>
 </div>
 
 <div id="leaderboard-screen">
     <h2>🏆 Лидерлер тактасы</h2>
-    <table class="leader-table" id="leader-body"></table>
-    
-    <div class="ad-container">
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-1495571814896964"
-             data-ad-slot="3193900890"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-    </div>
-
-    <button onclick="location.reload()" style="margin-top:20px; padding:10px 20px; border-radius:20px; border:none; background:#2ecc71; color:white; cursor:pointer;">Кайра баштоо</button>
+    <table id="leader-body" style="width:100%; max-width:300px; border-collapse:collapse;"></table>
+    <button onclick="location.reload()" style="margin-top:20px; padding:10px 20px; background:#2ecc71; color:white; border:none; border-radius:20px;">Кайра баштоо</button>
 </div>
 
 <div class="game-area">
     <div id="boy-player" class="rider" style="left: 5%;">
         <div id="boy-chat"></div>
-        <div style="text-align:center; font-size:10px; font-weight:bold; color:#2980b9;">ЖИГИТ</div>
         <video id="v-boy" muted loop playsinline><source src="boy_run.mp4" type="video/mp4"></video>
     </div>
     <div id="girl-player" class="rider" style="left: 45%;">
         <div id="girl-chat"></div>
-        <div style="text-align:center; font-size:10px; font-weight:bold; color:#e67e22;">КЫЗ</div>
         <video id="v-girl" muted loop playsinline><source src="girl_run.mp4" type="video/mp4"></video>
     </div>
 </div>
@@ -171,13 +109,10 @@
 
 <script>
     const firebaseConfig = { databaseURL: "https://kyz-kuumay-game-default-rtdb.firebaseio.com/" };
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let myRole = ""; 
-    let myName = "";
-    let currentQIndex = 0;
-    let score = 0;
+    let myRole = "", myName = "", currentQIndex = 0, score = 0;
 
     const questions = [
         {q:"Ылдамдыктын формуласы?", a:["v=s/t","F=ma","P=mg","E=mc2"], c:"v=s/t"},
@@ -258,19 +193,13 @@
         if (currentQIndex > 0 && currentQIndex % 10 === 0) {
             const ad = document.getElementById('ad-box');
             ad.style.display = 'flex';
-            setTimeout(() => { ad.style.display = 'none'; }, 3000);
+            setTimeout(() => ad.style.display = 'none', 3000);
         }
-
-        if (currentQIndex >= questions.length) {
-            finishGame();
-            return;
-        }
-
+        if (currentQIndex >= questions.length) { finishGame(); return; }
         const data = questions[currentQIndex];
         document.getElementById('q-text').innerText = data.q;
         const box = document.getElementById('options');
         box.innerHTML = "";
-
         data.a.sort(() => Math.random() - 0.5).forEach(txt => {
             const b = document.createElement('button');
             b.className = 'btn'; b.innerText = txt;
@@ -298,8 +227,8 @@
     }
 
     function listenToGameUpdate() {
-        db.ref('game_session/positions').on('value', (snapshot) => {
-            const pos = snapshot.val();
+        db.ref('game_session/positions').on('value', (snap) => {
+            const pos = snap.val();
             if (pos) {
                 if (pos.boy) document.getElementById('boy-player').style.left = (5 + pos.boy) + "%";
                 if (pos.girl) document.getElementById('girl-player').style.left = (45 + pos.girl) + "%";
@@ -308,35 +237,30 @@
     }
 
     function listenToChat() {
-        db.ref('game_session/chat').on('value', (snapshot) => {
-            const data = snapshot.val();
+        db.ref('game_session/chat').on('value', (snap) => {
+            const data = snap.val();
             if (data) {
                 const container = document.getElementById(data.role + '-chat');
                 container.innerHTML = `<div class="emoji-bubble">${data.msg}</div>`;
-                setTimeout(() => { container.innerHTML = ""; }, 1500);
+                setTimeout(() => container.innerHTML = "", 1500);
             }
         });
     }
 
-    function sendEmoji(emoji) {
-        db.ref('game_session/chat').set({ role: myRole, msg: emoji, time: Date.now() });
-    }
+    function sendEmoji(emoji) { db.ref('game_session/chat').set({ role: myRole, msg: emoji, time: Date.now() }); }
 
     function finishGame() {
         db.ref('leaderboard').push({ name: myName, score: score });
+        document.getElementById('leaderboard-screen').style.display = 'flex';
         showLeaderboard();
-        document.getElementById('ad-box').style.display = 'flex';
     }
 
     function showLeaderboard() {
-        document.getElementById('leaderboard-screen').style.display = 'flex';
-        db.ref('leaderboard').orderByChild('score').limitToLast(5).once('value', snapshot => {
+        db.ref('leaderboard').orderByChild('score').limitToLast(5).once('value', snap => {
             let html = "<tr><th>Аты</th><th>Упай</th></tr>";
             let list = [];
-            snapshot.forEach(child => { list.push(child.val()); });
-            list.reverse().forEach(user => {
-                html += `<tr><td>${user.name}</td><td>${user.score}</td></tr>`;
-            });
+            snap.forEach(c => list.push(c.val()));
+            list.reverse().forEach(u => html += `<tr><td>${u.name}</td><td>${u.score}</td></tr>`);
             document.getElementById('leader-body').innerHTML = html;
         });
     }
