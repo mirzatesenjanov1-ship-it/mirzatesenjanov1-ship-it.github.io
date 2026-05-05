@@ -274,7 +274,11 @@
     }
 
     function sendEmoji(emoji) { 
-        db.ref('game_session/chat').set({ role: myRole, msg: emoji, time: Date.now() }); 
+    // .push() колдонуу ар бир басууну уникалдуу кылат
+    db.ref('game_session/chat').push({ 
+        role: myRole, 
+        msg: emoji, 
+        time: Date.now() }); 
     }
 
     function finishGame() {
