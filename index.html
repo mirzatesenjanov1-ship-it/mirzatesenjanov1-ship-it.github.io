@@ -33,16 +33,28 @@
             position: absolute; bottom: 10px; width: 25%; max-width: 155px;
             transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .rider video { width: 100%; display: block; }
+        .rider video { width: 100%; display: block; position: relative; z-index: 1; }
+        
+        /* Эмоциялардын стилин оңдоо */
         .emoji-bubble {
-            position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
-            background: white; border-radius: 50%; padding: 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-size: 20px;
+            position: absolute; 
+            top: -50px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            background: white; 
+            border-radius: 50%; 
+            padding: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+            font-size: 28px;
+            z-index: 9999; /* Видеодон алдыга чыгаруу */
             animation: floatUp 1.5s ease-out forwards;
+            white-space: nowrap;
         }
+        
         @keyframes floatUp {
             0% { opacity: 0; transform: translateX(-50%) translateY(0); }
-            100% { opacity: 0; transform: translateX(-50%) translateY(-50px); }
+            20% { opacity: 1; }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-60px); }
         }
         .quiz-area {
             width: 100%; height: 60vh; background: #ffffff;
@@ -239,17 +251,26 @@
     }
 
     function listenToChat() {
-        db.ref('game_session/chat').on('value', (snap) => {
+        // .push() жана .on('child_added') колдонуу эмоциялардын туруктуу иштешин камсыз кылат
+        db.ref('game_session/chat').limitToLast(1).on('child_added', (snap) => {
             const data = snap.val();
             if (data) {
                 const container = document.getElementById(data.role + '-chat');
-                container.innerHTML = `<div class="emoji-bubble">${data.msg}</div>`;
-                setTimeout(() => container.innerHTML = "", 1500);
+                if (container) {
+                    container.innerHTML = `<div class="emoji-bubble">${data.msg}</div>`;
+                    setTimeout(() => container.innerHTML = "", 1500);
+                }
             }
         });
     }
 
-    function sendEmoji(emoji) { db.ref('game_session/chat').set({ role: myRole, msg: emoji, time: Date.now() }); }
+    function sendEmoji(emoji) { 
+        db.ref('game_session/chat').push({ 
+            role: myRole, 
+            msg: emoji, 
+            time: Date.now() 
+        }); 
+    }
 
     function finishGame() {
         db.ref('leaderboard').push({ name: myName, score: score });
