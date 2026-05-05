@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Кыз Куумай: Физика Online</title>
+
+    <!-- 1-КАДАМ: AdSense Негизги Скрипти -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
@@ -86,6 +90,9 @@
 
         .leader-table { width: 100%; max-width: 300px; border-collapse: collapse; margin-top: 20px; }
         .leader-table th, .leader-table td { padding: 10px; border-bottom: 1px solid #eee; }
+        
+        /* Жарнак контейнери */
+        .ad-container { width: 100%; max-width: 320px; margin: 15px 0; min-height: 50px; }
     </style>
 </head>
 <body>
@@ -104,7 +111,19 @@
 </div>
 
 <div id="setup-screen">
-    <h1 style="margin-bottom: 20px; font-size: 24px;">Кыз Куумай: Физика</h1>
+    <h1 style="margin-bottom: 10px; font-size: 24px;">Кыз Куумай: Физика</h1>
+    
+    <!-- 2-КАДАМ: Башкы беттеги Жарнак -->
+    <div class="ad-container">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+             data-ad-slot="1234567890"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+
     <input type="text" id="player-name" placeholder="Атыңызды жазыңыз" style="padding:15px; border-radius:10px; border:1px solid #ddd; margin-bottom:20px; width:220px;">
     <div style="display: flex; gap: 10px;">
         <button onclick="chooseRole('boy')" style="background:#2980b9; color:white; padding:15px 30px; border:none; border-radius:30px; font-weight:bold;">ЖИГИТ</button>
@@ -115,7 +134,19 @@
 <div id="leaderboard-screen">
     <h2>🏆 Лидерлер тактасы</h2>
     <table class="leader-table" id="leader-body"></table>
-    <button onclick="location.reload()" style="margin-top:30px; padding:10px 20px; border-radius:20px; border:none; background:#2ecc71; color:white; cursor:pointer;">Кайра баштоо</button>
+    
+    <!-- 3-КАДАМ: Лидерлер тактасынын астындагы Жарнак -->
+    <div class="ad-container">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+             data-ad-slot="0987654321"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+
+    <button onclick="location.reload()" style="margin-top:20px; padding:10px 20px; border-radius:20px; border:none; background:#2ecc71; color:white; cursor:pointer;">Кайра баштоо</button>
 </div>
 
 <div class="game-area">
@@ -228,7 +259,6 @@
     }
 
     function renderQuestion() {
-        // Ар бир 10 суроодон кийин жарнаманы чыгаруу
         if (currentQIndex > 0 && currentQIndex % 10 === 0) {
             const ad = document.getElementById('ad-box');
             ad.style.display = 'flex';
