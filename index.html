@@ -23,7 +23,7 @@
         #leaderboard-screen { display: none; z-index: 4000; }
         .game-area {
             position: relative; width: 100%; height: 40vh;
-            background: #ffffff; border-bottom: 2px solid #f0f0f0; overflow: visible; /* Эмоция чыгышы үчүн overflow visible кылынды */
+            background: #ffffff; border-bottom: 2px solid #f0f0f0; overflow: visible;
         }
         .rider {
             position: absolute; bottom: 10px; width: 25%; max-width: 155px;
@@ -31,27 +31,26 @@
         }
         .rider video { width: 100%; display: block; }
         
-        /* ЭМОЦИЯЛАРДЫ КААРМАНДЫН БАШЫНА ЧЫГАРУУ */
         .emoji-bubble {
             position: absolute; 
-            top: -80px; /* Башынан өйдө көтөрүү */
+            top: -80px; 
             left: 50%; 
             transform: translateX(-50%);
             background: white; 
             border-radius: 50%; 
             padding: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.4); 
-            font-size: 40px; /* Чоңураак эффект */
-            z-index: 9999 !important; /* Баарынан алдыга чыгаруу */
+            font-size: 40px; 
+            z-index: 9999 !important; 
             pointer-events: none;
-            animation: floatUp 1.5s ease-out forwards;
+            animation: floatUp 1.2s ease-out forwards;
             white-space: nowrap;
         }
         
         @keyframes floatUp {
             0% { opacity: 0; transform: translateX(-50%) translateY(30px); }
             20% { opacity: 1; transform: translateX(-50%) translateY(0); }
-            100% { opacity: 0; transform: translateX(-50%) translateY(-80px); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-100px); }
         }
 
         .quiz-area {
@@ -125,7 +124,9 @@
     const db = firebase.database();
 
     let myRole = "", myName = "", currentQIndex = 0, score = 0;
+    let gameStartTime = Date.now(); // Оюн башталган убакыт
 
+    // [СУРООЛОРДУН ТИЗМЕСИ ОШОЛ БОЙДОН КАЛДЫ...]
     const questions = [
         {q:"Ылдамдыктын формуласы?", a:["v=s/t","F=ma","P=mg","E=mc2"], c:"v=s/t"},
         {q:"Ылдамдануунун бирдиги?", a:["м/с2","м/с","кг","Н"], c:"м/с2"},
@@ -192,6 +193,7 @@
     function chooseRole(role) {
         myName = document.getElementById('player-name').value || "Оюнчу";
         myRole = role;
+        gameStartTime = Date.now(); // Оюн башталган убакытты белгилөө
         document.getElementById('bgMusic').play().catch(() => {});
         document.getElementById('setup-screen').style.display = 'none';
         document.getElementById('v-boy').play();
@@ -248,14 +250,22 @@
         });
     }
 
+    // ТҮЗӨТҮЛГӨН ЧАТ ЛОГИКАСЫ
     function listenToChat() {
-        db.ref('game_session/chat').limitToLast(1).on('child_added', (snap) => {
+        // Базадагы эски маалыматтарды тазалап, жаңыларын гана угуу
+        db.ref('game_session/chat').on('child_added', (snap) => {
             const data = snap.val();
-            if (data) {
+            // Эгер маалымат оюн башталгандан кийин келсе гана көрсөт
+            if (data && data.time >= gameStartTime) {
                 const container = document.getElementById(data.role + '-chat');
                 if (container) {
-                    container.innerHTML = `<div class="emoji-bubble">${data.msg}</div>`;
-                    setTimeout(() => { container.innerHTML = ""; }, 1500);
+                    // Жаңы эмоция элементин түзүү (мурункуну өчүрбөй эле үстүнө чыга берет)
+                    const el = document.createElement('div');
+                    el.className = 'emoji-bubble';
+                    el.innerText = data.msg;
+                    container.appendChild(el);
+                    // Анимация бүткөндө элементти өчүрүү
+                    setTimeout(() => el.remove(), 1200);
                 }
             }
         });
@@ -265,7 +275,7 @@
         db.ref('game_session/chat').push({ 
             role: myRole, 
             msg: emoji, 
-            time: firebase.database.ServerValue.TIMESTAMP 
+            time: Date.now() // Убакытты так жазуу
         }); 
     }
 
