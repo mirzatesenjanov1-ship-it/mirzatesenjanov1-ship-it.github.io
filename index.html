@@ -32,19 +32,11 @@
         .rider video { width: 100%; display: block; }
         
         .emoji-bubble {
-            position: absolute; 
-            top: -80px; 
-            left: 50%; 
-            transform: translateX(-50%);
-            background: white; 
-            border-radius: 50%; 
-            padding: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4); 
-            font-size: 40px; 
-            z-index: 9999 !important; 
-            pointer-events: none;
-            animation: floatUp 1.2s ease-out forwards;
-            white-space: nowrap;
+            position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+            background: white; border-radius: 50%; padding: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4); font-size: 40px; 
+            z-index: 9999 !important; pointer-events: none;
+            animation: floatUp 1.2s ease-out forwards; white-space: nowrap;
         }
         
         @keyframes floatUp {
@@ -65,7 +57,7 @@
         .chat-panel { display: flex; gap: 10px; margin-top: 15px; }
         .emoji-btn { font-size: 24px; background: #f0f0f0; border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; }
         #ad-box { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; color: white; padding: 20px; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .ad-container { width: 100%; max-width: 320px; margin: 10px 0; min-height: 100px; }
+        #waiting-msg { color: #e67e22; font-weight: bold; margin: 15px 0; min-height: 24px; }
     </style>
 </head>
 <body>
@@ -79,20 +71,24 @@
 
 <div id="setup-screen">
     <h1>Кыз Куумай: Физика</h1>
-    <div class="ad-container">
+    <div style="margin: 10px 0;">
         <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-1495571814896964" data-ad-slot="3193900890" data-ad-format="auto" data-full-width-responsive="true"></ins>
         <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </div>
-    <input type="text" id="player-name" placeholder="Атыңызды жазыңыз" style="padding:15px; border-radius:10px; width:220px; margin-bottom:20px;">
-    <div>
-        <button onclick="chooseRole('boy')" style="background:#2980b9; color:white; padding:15px 30px; border-radius:30px; border:none; font-weight:bold;">ЖИГИТ</button>
-        <button onclick="chooseRole('girl')" style="background:#e67e22; color:white; padding:15px 30px; border-radius:30px; border:none; font-weight:bold;">КЫЗ</button>
+    
+    <input type="text" id="player-name" placeholder="Атыңызды жазыңыз" style="padding:15px; border-radius:10px; width:220px; border: 2px solid #eee;">
+    
+    <div id="waiting-msg"></div>
+
+    <div id="role-btns">
+        <button onclick="checkAndJoin('boy')" style="background:#2980b9; color:white; padding:15px 30px; border-radius:30px; border:none; font-weight:bold; margin: 5px;">ЖИГИТ</button>
+        <button onclick="checkAndJoin('girl')" style="background:#e67e22; color:white; padding:15px 30px; border-radius:30px; border:none; font-weight:bold; margin: 5px;">КЫЗ</button>
     </div>
 </div>
 
 <div id="leaderboard-screen">
     <h2>🏆 Лидерлер тактасы</h2>
-    <table id="leader-body" style="width:100%; max-width:300px; border-collapse:collapse;"></table>
+    <table id="leader-body" style="width:100%; max-width:300px; border-collapse:collapse; margin: 0 auto;"></table>
     <button onclick="location.reload()" style="margin-top:20px; padding:10px 20px; background:#2ecc71; color:white; border:none; border-radius:20px;">Кайра баштоо</button>
 </div>
 
@@ -108,7 +104,7 @@
 </div>
 
 <div class="quiz-area">
-    <div id="q-text" class="question-text">Жүктөлүүдө...</div>
+    <div id="q-text" class="question-text">Оюн баштала элек...</div>
     <div id="options" class="options-grid"></div>
     <div class="chat-panel">
         <button class="emoji-btn" onclick="sendEmoji('😊')">😊</button>
@@ -124,9 +120,9 @@
     const db = firebase.database();
 
     let myRole = "", myName = "", currentQIndex = 0, score = 0;
-    let gameStartTime = Date.now(); // Оюн башталган убакыт
+    let gameStartTime = Date.now();
+    let sessionRef = null;
 
-    // [СУРООЛОРДУН ТИЗМЕСИ ОШОЛ БОЙДОН КАЛДЫ...]
     const questions = [
         {q:"Ылдамдыктын формуласы?", a:["v=s/t","F=ma","P=mg","E=mc2"], c:"v=s/t"},
         {q:"Ылдамдануунун бирдиги?", a:["м/с2","м/с","кг","Н"], c:"м/с2"},
@@ -190,14 +186,79 @@
         {q:"Кубаттуулук 1 Вт болсо, 1 секундда...", a:["1 Дж жумуш аткарылат","10 Дж","0 Дж","100 Дж"], c:"1 Дж жумуш аткарылат"}
     ];
 
-    function chooseRole(role) {
-        myName = document.getElementById('player-name').value || "Оюнчу";
+    function checkAndJoin(role) {
+        const nameInput = document.getElementById('player-name');
+        const msg = document.getElementById('waiting-msg');
+        
+        if (!nameInput.value.trim()) {
+            msg.innerText = "⚠️ Атыңызды жазыңыз!";
+            nameInput.style.borderColor = "#e74c3c";
+            return;
+        }
+
+        myName = nameInput.value;
         myRole = role;
-        gameStartTime = Date.now(); // Оюн башталган убакытты белгилөө
+        msg.innerText = "Издөө жүрүүдө...";
+        document.getElementById('role-btns').style.opacity = "0.5";
+        document.getElementById('role-btns').style.pointerEvents = "none";
+
+        db.ref('matchmaking').once('value', (snap) => {
+            let foundSession = null;
+            const sessions = snap.val();
+            const oppositeRole = (role === 'boy') ? 'girl' : 'boy';
+
+            if (sessions) {
+                for (let id in sessions) {
+                    if (sessions[id][oppositeRole] && !sessions[id][role]) {
+                        foundSession = id;
+                        break;
+                    }
+                }
+            }
+
+            if (foundSession) {
+                joinGame(foundSession);
+            } else {
+                createGame();
+            }
+        });
+    }
+
+    function createGame() {
+        const newId = "game_" + Math.random().toString(36).substr(2, 9);
+        const msg = document.getElementById('waiting-msg');
+        const partner = (myRole === 'boy') ? "кызыңызды" : "жигитиңизди";
+        msg.innerHTML = `⏳ Өз ${partner} табыңыз...<br>Күтүүдө...`;
+
+        sessionRef = db.ref('sessions/' + newId);
+        const matchData = {};
+        matchData[myRole] = myName;
+        db.ref('matchmaking/' + newId).set(matchData);
+
+        db.ref('matchmaking/' + newId).on('value', (snap) => {
+            const data = snap.val();
+            const oppositeRole = (myRole === 'boy') ? 'girl' : 'boy';
+            if (data && data[oppositeRole]) {
+                db.ref('matchmaking/' + newId).off();
+                startGame(newId);
+            }
+        });
+    }
+
+    function joinGame(id) {
+        db.ref('matchmaking/' + id).child(myRole).set(myName);
+        startGame(id);
+    }
+
+    function startGame(id) {
+        sessionRef = db.ref('sessions/' + id);
+        gameStartTime = Date.now();
+        
         document.getElementById('bgMusic').play().catch(() => {});
         document.getElementById('setup-screen').style.display = 'none';
         document.getElementById('v-boy').play();
         document.getElementById('v-girl').play();
+        
         listenToGameUpdate();
         listenToChat();
         renderQuestion();
@@ -235,13 +296,14 @@
     }
 
     function updatePositionInDB() {
-        const ref = db.ref('game_session/positions/' + myRole);
+        if (!sessionRef) return;
+        const ref = sessionRef.child('positions/' + myRole);
         let step = (myRole === 'boy') ? 2.8 : 1.6;
         ref.transaction(pos => (pos || 0) + step);
     }
 
     function listenToGameUpdate() {
-        db.ref('game_session/positions').on('value', (snap) => {
+        sessionRef.child('positions').on('value', (snap) => {
             const pos = snap.val();
             if (pos) {
                 if (pos.boy) document.getElementById('boy-player').style.left = (5 + pos.boy) + "%";
@@ -250,21 +312,16 @@
         });
     }
 
-    // ТҮЗӨТҮЛГӨН ЧАТ ЛОГИКАСЫ
     function listenToChat() {
-        // Базадагы эски маалыматтарды тазалап, жаңыларын гана угуу
-        db.ref('game_session/chat').on('child_added', (snap) => {
+        sessionRef.child('chat').on('child_added', (snap) => {
             const data = snap.val();
-            // Эгер маалымат оюн башталгандан кийин келсе гана көрсөт
             if (data && data.time >= gameStartTime) {
                 const container = document.getElementById(data.role + '-chat');
                 if (container) {
-                    // Жаңы эмоция элементин түзүү (мурункуну өчүрбөй эле үстүнө чыга берет)
                     const el = document.createElement('div');
                     el.className = 'emoji-bubble';
                     el.innerText = data.msg;
                     container.appendChild(el);
-                    // Анимация бүткөндө элементти өчүрүү
                     setTimeout(() => el.remove(), 1200);
                 }
             }
@@ -272,11 +329,8 @@
     }
 
     function sendEmoji(emoji) { 
-        db.ref('game_session/chat').push({ 
-            role: myRole, 
-            msg: emoji, 
-            time: Date.now() // Убакытты так жазуу
-        }); 
+        if (!sessionRef) return;
+        sessionRef.child('chat').push({ role: myRole, msg: emoji, time: Date.now() }); 
     }
 
     function finishGame() {
@@ -290,7 +344,7 @@
             let html = "<tr><th>Аты</th><th>Упай</th></tr>";
             let list = [];
             snap.forEach(c => list.push(c.val()));
-            list.reverse().forEach(u => html += `<tr><td>${u.name}</td><td>${u.score}</td></tr>`);
+            list.reverse().forEach(u => html += `<tr><td style="padding:10px; border-bottom:1px solid #eee;">${u.name}</td><td>${u.score}</td></tr>`);
             document.getElementById('leader-body').innerHTML = html;
         });
     }
