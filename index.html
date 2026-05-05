@@ -1,15 +1,11 @@
 <!DOCTYPE html>
 <html lang="ky">
 <head>
-    <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1495571814896964"
-     crossorigin="anonymous"></script> -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Кыз Куумай: Физика Online</title>
 
-    <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1495571814896964" crossorigin="anonymous"></script>
-
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
@@ -33,29 +29,30 @@
             position: absolute; bottom: 10px; width: 25%; max-width: 155px;
             transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .rider video { width: 100%; display: block; position: relative; z-index: 1; }
+        .rider video { width: 100%; display: block; }
         
-        /* Эмоциялардын стилин оңдоо */
+        /* ЭМОЦИЯЛАР ҮЧҮН ОҢДОЛГОН СТИЛЬ */
         .emoji-bubble {
             position: absolute; 
-            top: -50px; 
+            top: -60px; /* Башынан өйдө чыгаруу */
             left: 50%; 
             transform: translateX(-50%);
             background: white; 
             border-radius: 50%; 
-            padding: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
-            font-size: 28px;
-            z-index: 9999; /* Видеодон алдыга чыгаруу */
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
+            font-size: 35px; /* Чоңураак кылдык */
+            z-index: 9999 !important; /* Баарынан алдыда */
+            pointer-events: none;
             animation: floatUp 1.5s ease-out forwards;
-            white-space: nowrap;
         }
         
         @keyframes floatUp {
-            0% { opacity: 0; transform: translateX(-50%) translateY(0); }
-            20% { opacity: 1; }
-            100% { opacity: 0; transform: translateX(-50%) translateY(-60px); }
+            0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            20% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-70px); }
         }
+
         .quiz-area {
             width: 100%; height: 60vh; background: #ffffff;
             display: flex; flex-direction: column; align-items: center; padding: 10px; overflow-y: auto;
@@ -66,7 +63,7 @@
         .btn.correct { background: #2ecc71 !important; color: white; border-color: #2ecc71; }
         .btn.wrong { background: #e74c3c !important; color: white; border-color: #e74c3c; }
         .chat-panel { display: flex; gap: 10px; margin-top: 15px; }
-        .emoji-btn { font-size: 24px; background: #f0f0f0; border: none; border-radius: 50%; width: 45px; height: 45px; }
+        .emoji-btn { font-size: 24px; background: #f0f0f0; border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; }
         #ad-box { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; color: white; padding: 20px; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .ad-container { width: 100%; max-width: 320px; margin: 10px 0; min-height: 100px; }
     </style>
@@ -148,7 +145,7 @@
         {q:"Кыймылдын салыштырмалуулугу?", a:["Эсептөө системасына жараша","Өзгөрбөйт","Ар дайым бирдей","Жок"], c:"Эсептөө системасына жараша"},
         {q:"Ылдамдануу формуласы?", a:["a=Δv/t","a=s/t","a=F/v","a=vt"], c:"a=Δv/t"},
         {q:"Тормоздоодо ылдамдык?", a:["Азаят","Өсөт","Өзгөрбөйт","Нөл бойдон калат"], c:"Азаят"},
-        {q:"Материалдык чекит?", a:["Өлчөмү эске алынбаган нерсе","Чоң нерсе","Күчтүү чекит","Жок нерсе"], c:"Өлчөмү эске алынбаган нерсе"},
+        {q:"Материалдык чекит?", a:["Өлчөмү эске алынбаган нерсе","Чоң нерсе","Күчтүү чекит","Жок нерсе"], c:"Материалдык чекит"},
         {q:"Ньютондун 2-закону?", a:["F=ma","F=mg","P=mv","E=mgh"], c:"F=ma"},
         {q:"Күчтүн бирдиги?", a:["Ньютон","Жоуль","Ватт","Паскаль"], c:"Ньютон"},
         {q:"Нерсенин инерттүүлүгүнүн өлчөмү?", a:["Масса","Күч","Ылдамдык","Убакыт"], c:"Масса"},
@@ -250,8 +247,8 @@
         });
     }
 
+    // ЧАТТЫН ТУУРА ИШТӨӨСҮ ҮЧҮН ОҢДОЛГОН ЛОГИКА
     function listenToChat() {
-        // .push() жана .on('child_added') колдонуу эмоциялардын туруктуу иштешин камсыз кылат
         db.ref('game_session/chat').limitToLast(1).on('child_added', (snap) => {
             const data = snap.val();
             if (data) {
@@ -268,7 +265,7 @@
         db.ref('game_session/chat').push({ 
             role: myRole, 
             msg: emoji, 
-            time: Date.now() 
+            time: firebase.database.ServerValue.TIMESTAMP 
         }); 
     }
 
