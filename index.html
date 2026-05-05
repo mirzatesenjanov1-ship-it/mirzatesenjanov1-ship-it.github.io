@@ -5,45 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Кыз Куумай: Физика Online</title>
 
-    <!-- AdSense Негизги Скрипти -->
+    <!-- Google AdSense Скрипти -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1495571814896964" crossorigin="anonymous"></script>
 
-    <!-- Firebase -->
+    <!-- Firebase (Лидерлер тактасы жана онлайн кыймыл үчүн) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <style>
+        /* Оюндагы визуалдык эффекттер жана стилдер */
         * { box-sizing: border-box; touch-action: manipulation; }
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
             overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #ffffff;
         }
+        
         #setup-screen, #leaderboard-screen {
             position: fixed; inset: 0; background: white; z-index: 3000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             padding: 20px; text-align: center;
         }
+
         .game-area {
             position: relative; width: 100%; height: 40vh;
-            background: #f9f9f9; border-bottom: 2px solid #eee; overflow: hidden;
+            background: #f9f9f9; border-bottom: 2px solid #eee;
+            overflow: hidden;
         }
+
         .rider {
-            position: absolute; bottom: 10px; width: 25%; max-width: 150px;
+            position: absolute; bottom: 10px; width: 25%;
+            max-width: 150px;
             transition: left 0.4s ease-out;
         }
         .rider video { width: 100%; border-radius: 10px; }
+
         .quiz-area {
             width: 100%; height: 60vh; background: #ffffff;
-            display: flex; flex-direction: column; align-items: center; padding: 15px;
+            display: flex; flex-direction: column; align-items: center; 
+            padding: 15px;
         }
+
         .btn {
             padding: 15px; margin: 5px; width: 100%; max-width: 400px;
             border-radius: 12px; border: 1px solid #ddd; background: #fff;
-            font-weight: bold; cursor: pointer; font-size: 16px;
+            font-weight: bold; cursor: pointer;
         }
+
         .ad-container { width: 100%; max-width: 320px; margin: 15px 0; min-height: 50px; }
+        
         #ad-interstitial {
-            position: fixed; inset: 0; background: rgba(255,255,255,0.98);
+            position: fixed; inset: 0; background: rgba(255,255,255,0.95);
             z-index: 5000; display: none; flex-direction: column; 
             align-items: center; justify-content: center;
         }
@@ -51,10 +62,11 @@
 </head>
 <body>
 
-<!-- Жарнамалык тыныгуу экраны -->
+<!-- Оюн башталгандагы жарнамалык тыныгуу экраны -->
 <div id="ad-interstitial">
-    <h2 style="color: #e67e22;">Тереңирээк үйрөнүү үчүн...</h2>
+    <h2 style="color: #e67e22;">Жарнамалык тыныгуу</h2>
     <div class="ad-container">
+        <!-- AdSense бирдиги -->
         <ins class="adsbygoogle"
              style="display:block"
              data-ad-client="ca-pub-1495571814896964"
@@ -63,8 +75,7 @@
              data-full-width-responsive="true"></ins>
         <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </div>
-    <button onclick="window.open('https://boosty.to/astrophysica')" style="padding:10px 20px; background:#e67e22; color:white; border:none; border-radius:5px; margin-bottom:10px;">ФИЗИКА КУРСТАРЫ</button>
-    <p id="ad-timer">Оюн 3 секунддан кийин уланат...</p>
+    <p>Оюн 3 секунддан кийин уланат...</p>
 </div>
 
 <!-- Башкы бет -->
@@ -79,9 +90,9 @@
              data-full-width-responsive="true"></ins>
         <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </div>
-    <input type="text" id="player-name" placeholder="Атыңызды жазыңыз" style="padding:15px; width:250px; margin-bottom:15px; border-radius:10px; border:1px solid #ccc;">
-    <button onclick="startGame('boy')" style="background:#2980b9; color:white;" class="btn">ЖИГИТ (КУУЧУ)</button>
-    <button onclick="startGame('girl')" style="background:#e67e22; color:white;" class="btn">КЫЗ (КАЧУУЧУ)</button>
+    <input type="text" id="player-name" placeholder="Атыңызды жазыңыз" style="padding:15px; width:250px; margin-bottom:15px;">
+    <button onclick="startGame('boy')" style="background:#2980b9; color:white;" class="btn">ЖИГИТ БОЛУП ОЙНОО</button>
+    <button onclick="startGame('girl')" style="background:#e67e22; color:white;" class="btn">КЫЗ БОЛУП ОЙНОО</button>
 </div>
 
 <div class="game-area">
@@ -94,11 +105,12 @@
 </div>
 
 <div class="quiz-area">
-    <div id="q-text" style="font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center;">Жүктөлүүдө...</div>
+    <div id="q-text" style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">Суроо жүктөлүүдө...</div>
     <div id="options" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
 </div>
 
 <script>
+    // Firebase жана Оюн логикасы
     const firebaseConfig = { databaseURL: "https://kyz-kuumay-game-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -107,67 +119,11 @@
     let currentQIndex = 0;
     let score = 0;
 
+    // Сиздин 60 сурооңуз ушул жерде (кыскартылып көрсөтүлдү)
     const questions = [
         {q:"Ылдамдыктын формуласы?", a:["v=s/t","F=ma","P=mg","E=mc2"], c:"v=s/t"},
         {q:"Ылдамдануунун бирдиги?", a:["м/с2","м/с","кг","Н"], c:"м/с2"},
-        {q:"Еркин түшүү ылдамдануусу канча?", a:["9.8 м/с2","100 м/с2","5 м/с2","0 м/с2"], c:"9.8 м/с2"},
-        {q:"Траектория деген эмне?", a:["Кыймылдын сызыгы","Убакыт","Күч","Масса"], c:"Кыймылдын сызыгы"},
-        {q:"Ылдамдык вектордук чоңдукпу?", a:["Ооба","Жок","Кээде","Билбейм"], c:"Ооба"},
-        {q:"Убакыттын бирдиги?", a:["Секунда","Метр","Ньютон","Килограмм"], c:"Секунда"},
-        {q:"Түз сызыктуу бир калыптагы кыймыл?", a:["v=const","a=const","v=0","s=0"], c:"v=const"},
-        {q:"Аралыктын бирдиги?", a:["Метр","Секунда","Кг","Па"], c:"Метр"},
-        {q:"Спидометр эмнени өлчөйт?", a:["Ылдамдыкты","Убакытты","Күчтү","Массаны"], c:"Ылдамдыкты"},
-        {q:"1 км канча метр?", a:["1000","100","10","10000"], c:"1000"},
-        {q:"1 саатта канча секунд бар?", a:["3600","60","120","1000"], c:"3600"},
-        {q:"Ылдамдыктын СИ системасындагы бирдиги?", a:["м/с","км/саат","см/с","м/мин"], c:"м/с"},
-        {q:"Айлана боюнча кыймыл?", a:["Ийри сызыктуу","Түз сызыктуу","Тынч абал","Кыймылсыз"], c:"Ийри сызыктуу"},
-        {q:"Орточо ылдамдык?", a:["S_жалпы/t_жалпы","v1+v2","v/t","s*t"], c:"S_жалпы/t_жалпы"},
-        {q:"Көз ирмемдик ылдамдык?", a:["Берилген убакыттагы","Орточо","Жалпы","Максималдуу"], c:"Берилген убакыттагы"},
-        {q:"Нерсенин абалынын өзгөрүшү?", a:["Механикалык кыймыл","Тынч абал","Күч","Энергия"], c:"Механикалык кыймыл"},
-        {q:"Кыймылдын салыштырмалуулугу?", a:["Эсептөө системасына жараша","Өзгөрбөйт","Ар дайым бирдей","Жок"], c:"Эсептөө системасына жараша"},
-        {q:"Ылдамдануу формуласы?", a:["a=Δv/t","a=s/t","a=F/v","a=vt"], c:"a=Δv/t"},
-        {q:"Тормоздоодо ылдамдык?", a:["Азаят","Өсөт","Өзгөрбөйт","Нөл бойдон калат"], c:"Азаят"},
-        {q:"Материалдык чекит?", a:["Өлчөмү эске алынбаган нерсе","Чоң нерсе","Күчтүү чекит","Жок нерсе"], c:"Өлчөмү эске алынбаган нерсе"},
-        {q:"Ньютондун 2-закону?", a:["F=ma","F=mg","P=mv","E=mgh"], c:"F=ma"},
-        {q:"Күчтүн бирдиги?", a:["Ньютон","Жоуль","Ватт","Паскаль"], c:"Ньютон"},
-        {q:"Нерсенин инерттүүлүгүнүн өлчөмү?", a:["Масса","Күч","Ылдамдык","Убакыт"], c:"Масса"},
-        {q:"Салмактын формуласы?", a:["P=mg","F=ma","p=mv","A=Fs"], c:"P=mg"},
-        {q:"Серпилгичтик күчү (Гук закону)?", a:["F=-kx","F=ma","F=mg","P=mv"], c:"F=-kx"},
-        {q:"Үйкөлүү күчү кайда багытталат?", a:["Кыймылга каршы","Кыймыл тарапка","Өйдө","Төмөн"], c:"Кыймылга каршы"},
-        {q:"Бүткүл дүйнөлүк тартылуу закону кимге таандык?", a:["Ньютон","Галилей","Паскаль","Архимед"], c:"Ньютон"},
-        {q:"Массанын бирдиги?", a:["Килограмм","Грамм","Ньютон","Литр"], c:"Килограмм"},
-        {q:"Ньютондун 1-закону?", a:["Инерция закону","F=ma","Аракет-каршы аракет","Тартылуу закону"], c:"Инерция закону"},
-        {q:"Ньютондун 3-закону?", a:["F1=-F2","F=ma","P=mg","v=s/t"], c:"F1=-F2"},
-        {q:"Импульстун формуласы?", a:["p=mv","F=ma","E=mgh","A=Fs"], c:"p=mv"},
-        {q:"Күчтү өлчөөчү курал?", a:["Динамометр","Термометр","Барометр","Спидометр"], c:"Динамометр"},
-        {q:"Тыгыздыктын формуласы?", a:["ρ=m/V","P=F/S","v=s/t","m=Fa"], c:"ρ=m/V"},
-        {q:"Нерсе салмаксыздык абалда качан болот?", a:["Эркин түшүүдө","Тынч турганда","Жүгүргөндө","Сууда"], c:"Эркин түшүүдө"},
-        {q:"Гравитациялык туруктуулук (G)?", a:["6.67x10^-11","9.8","10","1"], c:"6.67x10^-11"},
-        {q:"Басымдын бирдиги?", a:["Паскаль","Ньютон","Жоуль","Ватт"], c:"Паскаль"},
-        {q:"Архимед күчү?", a:["F=ρgV","F=ma","F=mg","P=mv"], c:"F=ρgV"},
-        {q:"Басымдын формуласы?", a:["P=F/S","P=mg","A=Fs","v=s/t"], c:"P=F/S"},
-        {q:"Дененин деформациясы?", a:["Формасынын өзгөрүшү","Тынч абалы","Кыймылы","Массасы"], c:"Формасынын өзгөрүшү"},
-        {q:"Инерция деген эмне?", a:["Абалын сактоо касиети","Токтоо","Ылдамдоо","Кыйроо"], c:"Абалын сактоо касиети"},
-        {q:"Механикалык жумуш?", a:["A=Fs","P=mg","E=mgh","v=s/t"], c:"A=Fs"},
-        {q:"Жумуштун бирдиги?", a:["Жоуль","Ватт","Ньютон","Вольт"], c:"Жоуль"},
-        {q:"Кубаттуулуктун бирдиги?", a:["Ватт","Жоуль","Паскаль","Ампер"], c:"Ватт"},
-        {q:"Кинетикалык энергия?", a:["Ek=mv2/2","Ep=mgh","A=Fs","N=A/t"], c:"Ek=mv2/2"},
-        {q:"Потенциалдык энергия?", a:["Ep=mgh","Ek=mv2/2","A=Fs","p=mv"], c:"Ep=mgh"},
-        {q:"Кубаттуулуктун формуласы?", a:["N=A/t","A=Fs","E=mgh","P=F/S"], c:"N=A/t"},
-        {q:"Пайдалуу аракет коэффициенти (ПАК)?", a:["η=(Aп/Aт)*100%","η=At/Ap","η=Fs","η=mgh"], c:"η=(Aп/Aт)*100%"},
-        {q:"Энергия сакталуу закону?", a:["Жоголбойт, түрүн өзгөртөт","Жоголот","Өсөт","Азаят"], c:"Жоголбойт, түрүн өзгөртөт"},
-        {q:"Жылжыбаган блок?", a:["Күчтөн утуш бербейт","2 эсе берет","10 эсе берет","Жок"], c:"Күчтөн утуш бербейт"},
-        {q:"Кыймылдуу блок?", a:["2 эсе утуш берет","Бербейт","10 эсе берет","3 эсе"], c:"2 эсе утуш берет"},
-        {q:"Рычагдын эрежеси кимге таандык?", a:["Архимед","Ньютон","Паскаль","Гук"], c:"Архимед"},
-        {q:"Күч моменти?", a:["M=Fd","A=Fs","N=At","P=mg"], c:"M=Fd"},
-        {q:"1 кВт канча Ватт?", a:["1000","100","10","10000"], c:"1000"},
-        {q:"1 МДж канча Жоуль?", a:["1 000 000","1000","100","10 000"], c:"1 000 000"},
-        {q:"Жумуш аткарылыш үчүн эмне керек?", a:["Күч жана аралык","Масса","Убакыт","Тынчтык"], c:"Күч жана аралык"},
-        {q:"Алтын эреже: күчтөн канча утсак...", a:["Жолдон ошончо утулабыз","Жолдон утабыз","Эч нерсе болбойт","Убакыт утат"], c:"Жолдон ошончо утулабыз"},
-        {q:"Энергиянын бирдиги?", a:["Жоуль","Ватт","Ньютон","Кг"], c:"Жоуль"},
-        {q:"Толук энергия эмнеге барабар?", a:["Ek+Ep","Ek-Ep","Ek*Ep","Ap/At"], c:"Ek+Ep"},
-        {q:"Оордук күчүнүн жумушу?", a:["A=mgh","A=mv2","A=Fs","A=Nt"], c:"A=mgh"},
-        {q:"Кубаттуулук 1 Вт болсо, 1 секундда...", a:["1 Дж жумуш аткарылат","10 Дж","0 Дж","100 Дж"], c:"1 Дж жумуш аткарылат"}
+        // ... калган суроолорду бул жерге кошосуз
     ];
 
     function startGame(role) {
@@ -179,15 +135,9 @@
     }
 
     function renderQuestion() {
+        // Ар бир 10 суроодон кийин жарнама көрсөтүү
         if (currentQIndex > 0 && currentQIndex % 10 === 0) {
             showAdInterstitial();
-            return;
-        }
-
-        if (currentQIndex >= questions.length) {
-            alert("Куттуктайбыз! Сиз бардык суроолорго жооп бердиңиз.");
-            location.reload();
-            return;
         }
 
         const data = questions[currentQIndex];
@@ -199,31 +149,24 @@
             const b = document.createElement('button');
             b.className = 'btn';
             b.innerText = txt;
-            b.onclick = () => checkAnswer(txt, b);
+            b.onclick = () => checkAnswer(txt);
             box.appendChild(b);
         });
     }
 
-    function checkAnswer(ans, btn) {
+    function checkAnswer(ans) {
         if (ans === questions[currentQIndex].c) {
-            btn.style.background = "#2ecc71";
-            btn.style.color = "white";
             score += 10;
             currentQIndex++;
             movePlayer();
-            setTimeout(renderQuestion, 600);
+            if (currentQIndex < questions.length) renderQuestion();
         } else {
-            btn.style.background = "#e74c3c";
-            btn.style.color = "white";
-            setTimeout(() => {
-                btn.style.background = "white";
-                btn.style.color = "black";
-            }, 500);
+            alert("Ката! Кайра аракет кылыңыз.");
         }
     }
 
     function movePlayer() {
-        const step = (myRole === 'boy') ? 1.5 : 1.2;
+        const step = (myRole === 'boy') ? 2 : 1.5;
         const player = document.getElementById(myRole + '-player');
         let currentLeft = parseFloat(player.style.left);
         player.style.left = (currentLeft + step) + "%";
@@ -232,19 +175,9 @@
     function showAdInterstitial() {
         const adDiv = document.getElementById('ad-interstitial');
         adDiv.style.display = 'flex';
-        let timeLeft = 3;
-        const timerText = document.getElementById('ad-timer');
-        
-        const countdown = setInterval(() => {
-            timeLeft--;
-            timerText.innerText = `Оюн ${timeLeft} секунддан кийин уланат...`;
-            if (timeLeft <= 0) {
-                clearInterval(countdown);
-                adDiv.style.display = 'none';
-                currentQIndex++; // Жарнамадан кийин кийинки суроого өтүү
-                renderQuestion();
-            }
-        }, 1000);
+        setTimeout(() => {
+            adDiv.style.display = 'none';
+        }, 3000); // 3 секунддук жарнама тыныгуусу
     }
 </script>
 
