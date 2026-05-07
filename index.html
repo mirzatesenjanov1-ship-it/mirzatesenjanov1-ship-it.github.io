@@ -10,7 +10,8 @@
      crossorigin="anonymous"></script>
     <style>
         * { box-sizing: border-box; touch-action: manipulation; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #fff; }
+        /* Өзгөртүү: overflow: hidden; алынып салынды, скролл иштеши үчүн */
+        body, html { margin: 0; padding: 0; width: 100%; min-height: 100%; overflow-x: hidden; font-family: 'Segoe UI', sans-serif; background: #fff; scroll-behavior: smooth; }
         
         #setup-screen, #sync-overlay {
             position: fixed; inset: 0; background: white; z-index: 3000;
@@ -29,7 +30,7 @@
         }
         @keyframes bounceUp { 0% { opacity: 0; top: 0; } 20% { opacity: 1; } 100% { opacity: 0; top: -100px; } }
 
-        .quiz-area { width: 100%; height: 60vh; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .quiz-area { width: 100%; min-height: 60vh; padding: 15px; display: flex; flex-direction: column; align-items: center; }
         .btn { padding: 15px; margin: 5px; width: 100%; max-width: 400px; border-radius: 12px; border: 1px solid #ddd; background: #fff; font-weight: 600; cursor: pointer; }
         
         #countdown { font-size: 100px; font-weight: bold; color: #2ecc71; }
@@ -44,6 +45,12 @@
         .ads-container { width: 100%; max-width: 400px; height: 60px; background: #f0f0f0; margin: 10px 0; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; color: #666; font-size: 12px; }
         .rank-list { width: 80%; max-width: 300px; margin-top: 20px; text-align: left; }
         .rank-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #444; }
+
+        /* Жаңы маалыматтык блоктун стилдери */
+        .content-section { max-width: 900px; margin: 40px auto; padding: 20px; color: #2c3e50; line-height: 1.8; text-align: left; }
+        .content-section h2 { color: #2ecc71; border-left: 5px solid #2ecc71; padding-left: 15px; }
+        footer { background: #2c3e50; color: white; padding: 40px 20px; text-align: center; margin-top: 50px; }
+        footer a { color: #2ecc71; text-decoration: none; margin: 0 10px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -105,6 +112,33 @@
         <button onclick="sendEmoji('🚀')" style="font-size: 30px; border:none; background:none; cursor:pointer;">🚀</button>
     </div>
 </div>
+
+<section class="content-section">
+    <h2>Кыз Куумай Физика: Улуттук оюн жана Илим</h2>
+    <p>
+        Бул долбоор кыргыз элинин байыркы "Кыз куумай" оюнун санариптик форматта жандандырып, аны физика илими менен терең айкалыштырат. 
+        Оюнчулар жарыш учурунда механиканын негизги мыйзамдарын, ылдамдык, ылдамдануу жана энергиянын сакталуу принциптерин практикалык суроолор аркылуу өздөштүрүшөт.
+    </p>
+    <p>
+        <strong>Эмне үчүн бул маанилүү?</strong> Заманбап билим берүүдө "Геймификация" же оюн аркылуу үйрөнүү — эң натыйжалуу ыкмалардын бири. 
+        Биз Mirza Tesenjanov менен биргеликте физиканы жөн гана формулалар эмес, жандуу процесс катары көрсөтүүнү максат кылдык.
+    </p>
+    <h3>Окуу материалдары</h3>
+    <ul>
+        <li>Кинематика жана Динамиканын негиздери</li>
+        <li>Электр тогу жана Магнитизм кубулуштары</li>
+        <li>Астрофизика жана Кванттык физикага киришүү</li>
+    </ul>
+</section>
+
+<footer>
+    <div style="margin-bottom: 20px;">
+        <a href="about.html">Биз жөнүндө</a> | 
+        <a href="privacy.html">Купуялык саясаты</a> | 
+        <a href="contact.html">Байланыш</a>
+    </div>
+    <p>© 2026 Mirza Tesenjanov. "Кыз Куумай: Физика Online" — Билим берүү платформасы.</p>
+</footer>
 
 <script>
     const firebaseConfig = { databaseURL: "https://kyz-kuumay-game-default-rtdb.firebaseio.com/" };
@@ -211,7 +245,7 @@
             {q:"Массанын бирдиги?", a:["Килограмм","Грамм","Ньютон"], c:"Килограмм"},
             {q:"Басымдын бирдиги?", a:["Паскаль","Ньютон","Жоуль"], c:"Паскаль"},
             {q:"Тыгыздыктын формуласы?", a:["ρ=m/V","P=F/S","v=s/t"], c:"ρ=m/V"},
-            {q:"Жумуштун бирдиги?", a:["Жоуль","Ватт","Ньютон"], c:"Жоуль"},
+            {q:"Жумушнун бирдиги?", a:["Жоуль","Ватт","Ньютон"], c:"Жоуль"},
             {q:"Кубаттуулуктун бирдиги?", a:["Ватт","Жоуль","Паскаль"], c:"Ватт"},
             {q:"Кинетикалык энергия?", a:["Ek=mv²/2","Ep=mgh","A=Fs"], c:"Ek=mv²/2"},
             {q:"Потенциалдык энергия?", a:["Ep=mgh","Ek=mv²/2","p=mv"], c:"Ep=mgh"},
@@ -272,7 +306,6 @@
             document.getElementById('q-text').innerText = q.q;
             const optArea = document.getElementById('options'); optArea.innerHTML = "";
             
-            // Жоопторду аралаштыруу (Shuffle)
             let shuffledAnswers = [...q.a].sort(() => Math.random() - 0.5);
 
             shuffledAnswers.forEach(txt => {
