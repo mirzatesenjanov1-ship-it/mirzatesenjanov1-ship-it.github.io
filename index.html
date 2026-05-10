@@ -70,11 +70,7 @@
             <button class="level-btn" onclick="selectLevel(5)">6️⃣ АТОМДУК ЖАНА ЯДРОЛУК ФИЗИКА</button>
             <button class="level-btn" onclick="selectLevel(6)">7️⃣ АСТРОНОМИЯ</button>
         </div>
-        <button onclick="sendEmoji('😊')" style="font-size: 30px; border:none; background:none; cursor:pointer;">😊</button>
-        <button onclick="sendEmoji('😂')" style="font-size: 30px; border:none; background:none; cursor:pointer;">😂</button>
-        <button onclick="sendEmoji('💪')" style="font-size: 30px; border:none; background:none; cursor:pointer;">💪</button>
-        <button onclick="sendEmoji('🚀')" style="font-size: 30px; border:none; background:none; cursor:pointer;">🚀</button>
-
+        
     </div>
 </div>
 
@@ -107,7 +103,12 @@
     <div id="q-text" style="font-weight: bold; font-size: 18px; margin-bottom: 20px; text-align: center;"></div>
     <div id="options" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
 </div>
-
+<div id="emoji-controls" style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
+    <button onclick="sendEmoji('😂')" style="font-size: 24px; border: none; background: none; cursor: pointer;">😂</button>
+    <button onclick="sendEmoji('🐎')" style="font-size: 24px; border: none; background: none; cursor: pointer;">🐎</button>
+    <button onclick="sendEmoji('😜')" style="font-size: 24px; border: none; background: none; cursor: pointer;">😜</button>
+    <button onclick="sendEmoji('🔥')" style="font-size: 24px; border: none; background: none; cursor: pointer;">🔥</button>
+</div>
 <div id="leaderboard-screen">
     <h1 id="winner-text">Жеңүүчү!</h1>
     <button class="secondary-btn" onclick="location.reload()">Башкы меню</button>
