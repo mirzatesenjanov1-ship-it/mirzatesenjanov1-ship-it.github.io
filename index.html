@@ -50,6 +50,21 @@
         .primary-btn { padding: 15px 30px; background: #2ecc71; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
         .secondary-btn { padding: 15px 30px; background: #3498db; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
         #leaderboard-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 7000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .emoji-msg {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 40px;
+    animation: floatUp 2s forwards;
+    pointer-events: none;
+    z-index: 100;
+}
+
+@keyframes floatUp {
+    0% { transform: translate(-50%, 0); opacity: 1; }
+    100% { transform: translate(-50%, -100px); opacity: 0; }
+}
     </style>
 </head>
 <body onclick="startMenuMusic()">
@@ -911,6 +926,44 @@
             } else { alert("Ката же бөлмө толо!"); }
         });
     }
+    // 1. Эмодзи жиберүү
+function sendEmoji(emoji) {
+    if (sessionRef) {
+        sessionRef.child('emojis').set({
+            msg: emoji,
+            sender: myRole,
+            time: Date.now() // Жаңы билдирүү экенин билүү үчүн
+        });
+    }
+}
+
+// 2. Firebase'ден эмодзини байкоо (Муну оюн башталганда кошуу керек)
+function startEmojiListener() {
+    sessionRef.child('emojis').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            displayEmoji(data.sender, data.msg);
+        }
+    });
+}
+
+// 3. Эмодзини экранда көрсөтүү
+function displayEmoji(sender, msg) {
+    const containerId = (sender === "boy") ? "boy-container" : "girl-container";
+    const container = document.getElementById(containerId);
+    
+    // Эски эмодзи болсо өчүрүү
+    const oldEmoji = container.querySelector('.emoji-msg');
+    if (oldEmoji) oldEmoji.remove();
+
+    const emojiEl = document.createElement('div');
+    emojiEl.className = 'emoji-msg';
+    emojiEl.innerText = msg;
+    container.appendChild(emojiEl);
+
+    // 2 секунддан кийин тазалоо
+    setTimeout(() => emojiEl.remove(), 2000);
+}
 
     function startSync() {
         document.getElementById('setup-screen').style.display = "none";
