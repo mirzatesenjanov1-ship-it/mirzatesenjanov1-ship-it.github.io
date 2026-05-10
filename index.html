@@ -12,11 +12,12 @@
         * { box-sizing: border-box; touch-action: manipulation; }
         body, html { margin: 0; padding: 0; width: 100%; min-height: 100%; overflow-x: hidden; font-family: 'Segoe UI', sans-serif; background: #fff; scroll-behavior: smooth; }
         
-        #setup-screen, #sync-overlay {
+        #setup-screen, #sync-overlay, #level-screen {
             position: fixed; inset: 0; background: white; z-index: 3000;
             display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;
         }
         #sync-overlay { background: rgba(0,0,0,0.95); color: white; display: none; z-index: 4000; }
+        #level-screen { display: none; overflow-y: auto; }
 
         .game-area { position: relative; width: 100%; height: 40vh; border-bottom: 2px solid #eee; background: #fdfdfd; }
         .rider { position: absolute; bottom: 10px; width: 25%; max-width: 140px; transition: left 0.4s ease; }
@@ -31,7 +32,6 @@
 
         .quiz-area { width: 100%; min-height: 60vh; padding: 15px; display: flex; flex-direction: column; align-items: center; }
         
-        /* Эффект берилген баскычтардын стили */
         .btn { 
             padding: 15px; margin: 5px; width: 100%; max-width: 400px; border-radius: 12px; 
             border: 1px solid #ddd; background: #fff; font-weight: 600; cursor: pointer;
@@ -39,23 +39,14 @@
         }
         .btn:active { transform: scale(0.95); }
 
-        /* Туура жана ката жооптордун анимациясы */
+        .level-btn { background: #f8f9fa; border: 2px solid #2ecc71; color: #2c3e50; font-size: 16px; margin: 8px; }
+        .level-btn:hover { background: #2ecc71; color: white; }
+
         .correct-flash { background-color: #2ecc71 !important; color: white !important; animation: pulse-green 0.5s; }
         .wrong-flash { background-color: #e74c3c !important; color: white !important; animation: shake 0.4s; }
 
-        @keyframes pulse-green {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            50% { transform: translateX(10px); }
-            75% { transform: translateX(-10px); }
-            100% { transform: translateX(0); }
-        }
+        @keyframes pulse-green { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-10px); } 50% { transform: translateX(10px); } 75% { transform: translateX(-10px); } 100% { transform: translateX(0); } }
 
         #countdown { font-size: 100px; font-weight: bold; color: #2ecc71; }
         .primary-btn { padding: 15px 30px; background: #2ecc71; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin: 5px; }
@@ -81,7 +72,7 @@
 <audio id="bgMusic" loop preload="auto"><source src="music.mp3" type="audio/mpeg"></audio>
 
 <div id="setup-screen">
-    <div class="ads-container">Google AdSense Реклама Бул Жерде</div>
+    <div class="ads-container">Google AdSense Реклама</div>
     <h2>Кыз Куумай: Физика</h2>
     <input type="text" id="player-name" placeholder="Атыңыз..." style="padding:15px; border-radius:10px; width:250px; margin-bottom:15px; border: 1px solid #ccc;">
     
@@ -94,9 +85,22 @@
     <p id="wait-status" style="margin-top:20px; font-weight: bold; color: #e67e22;"></p>
 </div>
 
+<div id="level-screen">
+    <h2 style="color: #2ecc71;">Деңгээлди тандаңыз</h2>
+    <div style="display: flex; flex-direction: column; width: 100%; max-width: 400px;">
+        <button class="btn level-btn" onclick="selectLevel(1)">1. МЕХАНИКА</button>
+        <button class="btn level-btn" onclick="selectLevel(2)">2. МОЛЕКУЛАЛЫК ФИЗИКА</button>
+        <button class="btn level-btn" onclick="selectLevel(3)">3. ЭЛЕКТРОДИНАМИКА</button>
+        <button class="btn level-btn" onclick="selectLevel(4)">4. ТЕРМЕЛҮҮЛӨР ЖАНА ТОЛКУНДАР</button>
+        <button class="btn level-btn" onclick="selectLevel(5)">5. ОПТИКА</button>
+        <button class="btn level-btn" onclick="selectLevel(6)">6. АТОМДУК ЖАНА ЯДРОЛУК ФИЗИКА</button>
+        <button class="btn level-btn" onclick="selectLevel(7)">7. АСТРОНОМИЯ</button>
+    </div>
+</div>
+
 <div id="boosty-modal">
     <h2 style="color:#f1c40f;">Тыныгуу! 💡</h2>
-    <p style="font-size: 18px; margin-bottom: 20px;">20 суроо өттү! Окууну тездетүү үчүн "Механика" деңгээлине жазылыңыз:</p>
+    <p style="font-size: 18px; margin-bottom: 20px;">20 суроо өттү! Окууну тездетүү үчүн жазылыңыз:</p>
     <a href="https://boosty.to/astrophysica/purchase/3915502?ssource=DIRECT&share=subscription_link" target="_blank" style="background:#f1c40f; color:black; padding:15px 40px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:18px;">BOOSTY'ГЕ ЖАЗЫЛУУ</a>
     <button onclick="closeModal()" style="margin-top:25px; background:none; border:1px solid white; color:white; padding:10px 20px; cursor:pointer; border-radius:5px;">Оюнду улантуу</button>
 </div>
@@ -104,7 +108,7 @@
 <div id="leaderboard-screen">
     <h1 id="winner-text" style="color:#2ecc71;">Ким жеңди?</h1>
     <div class="rank-list" id="rank-content"></div>
-    <div class="ads-container" style="margin-top:30px;">Google AdSense Реклама Бул Жерде</div>
+    <div class="ads-container" style="margin-top:30px;">Google AdSense Реклама</div>
     <button class="secondary-btn" onclick="location.reload()" style="margin-top:20px;">Кайра ойноо</button>
 </div>
 
@@ -126,6 +130,7 @@
 </div>
 
 <div class="quiz-area">
+    <div id="level-title" style="color: #2ecc71; font-weight: bold; margin-bottom: 5px;"></div>
     <div id="q-text" style="font-weight: bold; font-size: 18px; margin-bottom: 20px; text-align: center;"></div>
     <div id="options" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
     <div style="margin-top: 20px; display: flex; gap: 15px;">
@@ -138,23 +143,14 @@
 
 <section class="content-section">
     <h2>Кыз Куумай Физика: Улуттук оюн жана Илим</h2>
-    <p>
-        Бул долбоор кыргыз элинин байыркы "Кыз куумай" оюнун санариптик форматта жандандырып, аны физика илими менен терең айкалыштырат. 
-        Оюнчулар жарыш учурунда механиканын негизги мыйзамдарын, ылдамдык, ылдамдануу жана энергиянын сакталуу принциптерин практикалык суроолор аркылуу өздөштүрүшөт.
-    </p>
-    <p>
-        <strong>Эмне үчүн бул маанилүү?</strong> Заманбап билим берүүдө "Геймификация" же оюн аркылуу үйрөнүү — эң натыйжалуу ыкмалардын бири. 
-        Биз Mirza Tesenjanov менен биргеликте физиканы жөн гана формулалар эмес, жандуу процесс катары көрсөтүүнү максат кылдык.
-    </p>
+    <p>Бул долбоор кыргыз элинин байыркы "Кыз куумай" оюнун санариптик форматта жандандырып, аны физика илими менен терең айкалыштырат. 7 башка деңгээл аркылуу физиканын бардык негизги бөлүмдөрүн үйрөнүүгө болот.</p>
 </section>
 
 <footer>
     <div style="margin-bottom: 20px;">
-        <a href="about.html">Биз жөнүндө</a> | 
-        <a href="privacy.html">Купуялык саясаты</a> | 
-        <a href="contact.html">Байланыш</a>
+        <a href="about.html">Биз жөнүндө</a> | <a href="privacy.html">Купуялык саясаты</a> | <a href="contact.html">Байланыш</a>
     </div>
-    <p>© 2026 Mirza Tesenjanov. "Кыз Куумай: Физика Online" — Билим берүү платформасы.</p>
+    <p>© 2026 Mirza Tesenjanov. "Кыз Куумай: Физика Online"</p>
 </footer>
 
 <script>
@@ -162,8 +158,59 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let myRole = "", myName = "", sessionRef = null, gameActive = false;
-    let scores = { boy: 0, girl: 0 };
+    let myRole = "", myName = "", sessionRef = null, gameActive = false, selectedLvl = 1;
+
+    const quizData = {
+        1: { title: "МЕХАНИКА", questions: [
+            {q:"Ылдамдыктын формуласы?", a:["v=s/t","F=ma","P=mg"], c:"v=s/t"},
+            {q:"Ылдамдануунун бирдиги?", a:["м/с²","м/с","кг"], c:"м/с²"},
+            {q:"Ньютондун 2-закону?", a:["F=ma","F=mg","P=mv"], c:"F=ma"},
+            {q:"Күчтүн бирдиги?", a:["Ньютон","Жоуль","Ватт"], c:"Ньютон"},
+            {q:"Эркин түшүү ылдамдануусу (g)?", a:["9.8 м/с²","10 м/с²","5 м/с²"], c:"9.8 м/с²"}
+        ]},
+        2: { title: "МОЛЕКУЛАЛЫК ФИЗИКА", questions: [
+            {q:"Заттын үч абалы?", a:["Катуу, суюк, газ","Муздак, ысык","Жумшак"], c:"Катуу, суюк, газ"},
+            {q:"Диффузия деген эмне?", a:["Өз алдынча аралашуу","Эрүү","Катуулануу"], c:"Өз алдынча аралашуу"},
+            {q:"Температураны өлчөөчү курал?", a:["Термометр","Барометр","Омметр"], c:"Термометр"},
+            {q:"Күйүүчү майдын энергиясы?", a:["Q=qm","A=Fs","P=mg"], c:"Q=qm"},
+            {q:"Ысык суунун тыгыздыгы?", a:["Муздактан аз","Муздактан көп","Барабар"], c:"Муздактан аз"}
+        ]},
+        3: { title: "ЭЛЕКТРОДИНАМИКА", questions: [
+            {q:"Ток күчүнүн бирдиги?", a:["Ампер","Вольт","Ом"], c:"Ампер"},
+            {q:"Ом закону?", a:["I=U/R","P=UI","A=Fs"], c:"I=U/R"},
+            {q:"Чыңалуунун бирдиги?", a:["Вольт","Ампер","Ватт"], c:"Вольт"},
+            {q:"Электрондун заряды?", a:["Терс","Оң","Нейтралдуу"], c:"Терс"},
+            {q:"Турактуу ток булагы?", a:["Батарея","Трансформатор","Лампа"], c:"Батарея"}
+        ]},
+        4: { title: "ТЕРМЕЛҮҮЛӨР ЖАНА ТОЛКУНДАР", questions: [
+            {q:"Термелүү жыштыгынын бирдиги?", a:["Герц","Секунда","Метр"], c:"Герц"},
+            {q:"Үн кайда таралбайт?", a:["Вакуумда","Сууда","Темирде"], c:"Вакуумда"},
+            {q:"Адам кулагы уккан жыштык?", a:["20-20000 Гц","0-10 Гц","100к Гц"], c:"20-20000 Гц"},
+            {q:"Термелүү периоду?", a:["T=t/n","T=1/v","Экөө тең"], c:"Экөө тең"},
+            {q:"Математикалык маятник?", a:["T=2π√(l/g)","v=s/t","F=ma"], c:"T=2π√(l/g)"}
+        ]},
+        5: { title: "ОПТИКА", questions: [
+            {q:"Жарыктын ылдамдыгы?", a:["300 000 км/с","300 км/с","1000 км/с"], c:"300 000 км/с"},
+            {q:"Линзанын оптикалык күчү?", a:["Диоптрия","Метр","Ньютон"], c:"Диоптрия"},
+            {q:"Жарыктын чагылуу закону?", a:["Бурчтар барабар","Барабар эмес","90°"], c:"Бурчтар барабар"},
+            {q:"Ак жарыктын курамында канча түс бар?", a:["7","3","10"], c:"7"},
+            {q:"Күзгүдөгү сүрөттөлүш кандай?", a:["Жалган","Чыныгы","Жок"], c:"Жалган"}
+        ]},
+        6: { title: "АТОМДУК ЖАНА ЯДРОЛУК ФИЗИКА", questions: [
+            {q:"Атомдун борборунда эмне бар?", a:["Ядро","Электрон","Боштук"], c:"Ядро"},
+            {q:"Протондун заряды?", a:["Оң","Терс","Нейтралдуу"], c:"Оң"},
+            {q:"Нейтрондун заряды?", a:["Жок","Оң","Терс"], c:"Жок"},
+            {q:"Фотоэффектти ким түшүндүргөн?", a:["Эйнштейн","Ньютон","Паскаль"], c:"Эйнштейн"},
+            {q:"Радиоактивдүүлүктү ким ачкан?", a:["Беккерель","Кюри","Экөө тең"], c:"Экөө тең"}
+        ]},
+        7: { title: "АСТРОНОМИЯ", questions: [
+            {q:"Күн энергиясынын булагы?", a:["Термоядролук реакция","Көмүр","Шамал"], c:"Термоядролук реакция"},
+            {q:"Күн системасындагы эң чоң планета?", a:["Юпитер","Сатурн","Марс"], c:"Юпитер"},
+            {q:"Жерге эң жакын жылдыз?", a:["Күн","Сириус","Полярдык"], c:"Күн"},
+            {q:"Галактикабыздын аты?", a:["Саманчынын жолу","Андромеда","Марс"], c:"Саманчынын жолу"},
+            {q:"Күндөн кийинки эң жакын жылдыз?", a:["Проксима Центавра","Вега","Альтаир"], c:"Проксима Центавра"}
+        ]
+    };
 
     function closeModal() { document.getElementById('boosty-modal').style.display = "none"; }
 
@@ -176,8 +223,8 @@
         document.getElementById('wait-status').innerHTML = `Код: <span style="font-size:35px; color:#2ecc71;">${code}</span><br>Экинчи оюнчуга бериңиз...`;
         
         const ref = db.ref('rooms/' + code);
-        ref.set({ players: { boy: myName }, sync: { boy: false, girl: false }, pos: { boy: 0, girl: 0 }, scores: { boy: 0, girl: 0 } });
-        ref.child('players/girl').on('value', s => { if(s.exists()) initSession(code); });
+        ref.set({ players: { boy: myName }, sync: { boy: false, girl: false }, pos: { boy: 0, girl: 0 }, scores: { boy: 0, girl: 0 }, level: 1 });
+        ref.child('players/girl').on('value', s => { if(s.exists()) showLevelSelect(code); });
         ref.onDisconnect().remove();
     }
 
@@ -190,16 +237,32 @@
         ref.once('value', s => {
             if (s.exists() && !s.val().players.girl) {
                 ref.child('players/girl').set(myName);
-                initSession(code);
+                showLevelSelect(code);
             } else { alert("Код ката же бөлмө толо!"); }
         });
     }
 
-    function initSession(id) {
+    function showLevelSelect(id) {
         sessionRef = db.ref('rooms/' + id);
         document.getElementById('setup-screen').style.display = "none";
-        document.getElementById('sync-overlay').style.display = "flex";
+        if (myRole === 'boy') {
+            document.getElementById('level-screen').style.display = "flex";
+        } else {
+            document.getElementById('wait-status').innerText = "Биринчи оюнчу деңгээл тандап жатат...";
+            sessionRef.child('level').on('value', s => { if(s.val()) { selectedLvl = s.val(); initSession(); } });
+        }
+    }
 
+    function selectLevel(num) {
+        selectedLvl = num;
+        sessionRef.child('level').set(num);
+        initSession();
+    }
+
+    function initSession() {
+        document.getElementById('level-screen').style.display = "none";
+        document.getElementById('sync-overlay').style.display = "flex";
+        
         sessionRef.child('sync').on('value', s => {
             const sync = s.val();
             if (sync && sync.boy && sync.girl && !gameActive) startCountdown();
@@ -251,81 +314,17 @@
     }
 
     function renderGame() {
-        const questions = [
-            {q:"Ылдамдыктын формуласы?", a:["v=s/t","F=ma","P=mg"], c:"v=s/t"},
-            {q:"Ылдамдануунун бирдиги?", a:["м/с²","м/с","кг"], c:"м/с²"},
-            {q:"Эркин түшүү ылдамдануусу (g)?", a:["9.8 м/с²","10 м/с²","5 м/с²"], c:"9.8 м/с²"},
-            {q:"Траектория деген эмне?", a:["Кыймыл сызыгы","Убакыт","Аралык"], c:"Кыймыл сызыгы"},
-            {q:"1 км канча метр?", a:["1000","100","10000"], c:"1000"},
-            {q:"Ньютондун 2-закону?", a:["F=ma","F=mg","P=mv"], c:"F=ma"},
-            {q:"Күчтүн бирдиги?", a:["Ньютон","Жоуль","Ватт"], c:"Ньютон"},
-            {q:"Массанын бирдиги?", a:["Килограмм","Грамм","Ньютон"], c:"Килограмм"},
-            {q:"Басымдын бирдиги?", a:["Паскаль","Ньютон","Жоуль"], c:"Паскаль"},
-            {q:"Тыгыздыктын формуласы?", a:["ρ=m/V","P=F/S","v=s/t"], c:"ρ=m/V"},
-            {q:"Жумушнун бирдиги?", a:["Жоуль","Ватт","Ньютон"], c:"Жоуль"},
-            {q:"Кубаттуулуктун бирдиги?", a:["Ватт","Жоуль","Паскаль"], c:"Ватт"},
-            {q:"Кинетикалык энергия?", a:["Ek=mv²/2","Ep=mgh","A=Fs"], c:"Ek=mv²/2"},
-            {q:"Потенциалдык энергия?", a:["Ep=mgh","Ek=mv²/2","p=mv"], c:"Ep=mgh"},
-            {q:"1 кВт канча Ватт?", a:["1000","100","10"], c:"1000"},
-            {q:"Импульстун формуласы?", a:["p=mv","F=ma","E=mgh"], c:"p=mv"},
-            {q:"Үн кайда таралбайт?", a:["Вакуумда","Сууда","Темирде"], c:"Вакуумда"},
-            {q:"Термелүү жыштыгынын бирдиги?", a:["Герц","Секунда","Метр"], c:"Герц"},
-            {q:"Күчтү өлчөөчү курал?", a:["Динамометр","Барометр","Термометр"], c:"Динамометр"},
-            {q:"Атмосфералык басымды өлчөөчү курал?", a:["Барометр","Спидометр","Динамометр"], c:"Барометр"},
-            {q:"Заттын үч абалы?", a:["Катуу, суюк, газ","Муздак, ысык","Жумшак, катуу"], c:"Катуу, суюк, газ"},
-            {q:"Архимед күчү?", a:["F=ρgV","F=ma","P=mg"], c:"F=ρgV"},
-            {q:"Ньютондун 3-закону?", a:["F1=-F2","F=ma","P=mg"], c:"F1=-F2"},
-            {q:"Ток күчүнүн бирдиги?", a:["Ампер","Вольт","Ом"], c:"Ампер"},
-            {q:"Чыңалуунун бирдиги?", a:["Вольт","Ампер","Ватт"], c:"Вольт"},
-            {q:"Каршылыктын бирдиги?", a:["Ом","Ампер","Вольт"], c:"Ом"},
-            {q:"Ом закону?", a:["I=U/R","P=UI","A=Fs"], c:"I=U/R"},
-            {q:"Линзанын оптикалык күчү?", a:["Диоптрия","Метр","Ньютон"], c:"Диоптрия"},
-            {q:"Жарыктын ылдамдыгы?", a:["300 000 км/с","300 км/с","1000 км/с"], c:"300 000 км/с"},
-            {q:"Диффузия деген эмне?", a:["Өз алдынча аралашуу","Эрүү","Катуулануу"], c:"Өз алдынча аралашуу"},
-            {q:"Температураны өлчөөчү курал?", a:["Термометр","Барометр","Омметр"], c:"Термометр"},
-            {q:"Күйүүчү майдын энергиясы?", a:["Q=qm","A=Fs","P=mg"], c:"Q=qm"},
-            {q:"Жылуулук берилүү түрлөрү?", a:["3 түрү бар","1 түрү бар","5 түрү бар"], c:"3 түрү бар"},
-            {q:"Электрондун заряды?", a:["Терс","Оң","Нейтралдуу"], c:"Терс"},
-            {q:"Протондун заряды?", a:["Оң","Терс","Нейтралдуу"], c:"Оң"},
-            {q:"Нейтрондун заряды?", a:["Жок (нейтрал)","Оң","Терс"], c:"Жок (нейтрал)"},
-            {q:"Магниттин канча уюлу бар?", a:["2","1","4"], c:"2"},
-            {q:"Жарыктын чагылуу закону?", a:["Бурчтар барабар","Барабар эмес","90 градус"], c:"Бурчтар барабар"},
-            {q:"Кулон закону эмнени сүрөттөйт?", a:["Заряддардын өз ара аракети","Кыймылды","Жылуулукту"], c:"Заряддардын өз ара аракети"},
-            {q:"Конденсатор эмнени топтойт?", a:["Электр зарядын","Жылуулукту","Сууну"], c:"Конденсатор эмнени топтойт?"},
-            {q:"Турактуу ток булагы?", a:["Батарея","Трансформатор","Лампочка"], c:"Батарея"},
-            {q:"Күч моменти?", a:["M=Fd","A=Fs","P=mg"], c:"M=Fd"},
-            {q:"Паскаль закону эмнеге тиешелүү?", a:["Суюктук жана газга","Катуу нерсеге","Болгону ташка"], c:"Суюктук жана газга"},
-            {q:"Кыймылдуу блок канча утуш берет?", a:["2 эсе","Бербейт","10 эсе"], c:"2 эсе"},
-            {q:"ПАКтын формуласы?", a:["η=(Ap/At)*100%","η=Fs","η=mgh"], c:"η=(Ap/At)*100%"},
-            {q:"1 МДж канча Жоуль?", a:["1 000 000","1000","10 000"], c:"1 000 000"},
-            {q:"Гравитациялык туруктуулук?", a:["6.67*10^-11","9.8","1"], c:"6.67*10^-11"},
-            {q:"Салмаксыздык качан болот?", a:["Эркин түшүүдө","Жүгүргөндө","Уктаганда"], c:"Эркин түшүүдө"},
-            {q:"Алтын эреже: күчтөн утсак...", a:["Жолдон утулабыз","Жолдон утабыз","Эч нерсе болбойт"], c:"Жолдон утулабыз"},
-            {q:"Термелүү периоду?", a:["T=t/n","T=1/v","Экөө тең туура"], c:"Экөө тең туура"},
-            {q:"Математикалык маятник?", a:["T=2π√(l/g)","v=s/t","F=ma"], c:"T=2π√(l/g)"},
-            {q:"Адам кулагы уккан жыштык?", a:["20-20000 Гц","0-10 Гц","100к Гц"], c:"20-20000 Гц"},
-            {q:"Ысык суунун тыгыздыгы?", a:["Муздактан аз","Муздактан көп","Барабар"], c:"Муздактан аз"},
-            {q:"Заряддалган бөлүкчөлөрдүн иреттүү кыймылы?", a:["Электр тогу","Диффузия","Нуктануу"], c:"Электр тогу"},
-            {q:"Фотоэффектти ким түшүндүргөн?", a:["Эйнштейн","Ньютон","Паскаль"], c:"Эйнштейн"},
-            {q:"Күн энергиясынын булагы?", a:["Термоядролук реакция","Көмүр күйүү","Шамал"], c:"Термоядролук реакция"},
-            {q:"Радиоактивдүүлүктү ким ачкан?", a:["Беккерель","Кюри","Экөө тең"], c:"Экөө тең"},
-            {q:"Атомдун борборунда эмне бар?", a:["Ядро","Электрон","Боштук"], c:"Ядро"},
-            {q:"Нерсе качан сууга калкып чыгат?", a:["Fa > F_о","Fa < F_о","Fa = 0"], c:"Fa > F_о"},
-            {q:"Энергия сакталуу закону?", a:["Жоголбойт, түрүн өзгөртөт","Жоголот","Ар дайым азаят"], c:"Жоголбойт, түрүн өзгөртөт"}
-        ];
-
+        const currentLvlData = quizData[selectedLvl];
+        const questions = currentLvlData.questions;
+        document.getElementById('level-title').innerText = currentLvlData.title;
         let qIdx = 0;
 
-        // Жоопторго эффект берүүчү функция
         function applyEffect(isCorrect, element) {
             const effectClass = isCorrect ? 'correct-flash' : 'wrong-flash';
             element.classList.add(effectClass);
             setTimeout(() => {
                 element.classList.remove(effectClass);
-                if (isCorrect) {
-                    qIdx++;
-                    showQ();
-                }
+                if (isCorrect) { qIdx++; showQ(); }
             }, 500);
         }
 
@@ -336,22 +335,18 @@
             const q = questions[qIdx];
             document.getElementById('q-text').innerText = q.q;
             const optArea = document.getElementById('options'); optArea.innerHTML = "";
-            
             let shuffledAnswers = [...q.a].sort(() => Math.random() - 0.5);
 
             shuffledAnswers.forEach(txt => {
                 const b = document.createElement('button'); 
-                b.className = 'btn'; 
-                b.innerText = txt;
+                b.className = 'btn'; b.innerText = txt;
                 b.onclick = () => {
                     if (txt === q.c) {
                         let step = (myRole === 'boy') ? 2.5 : 1.2;
                         sessionRef.child('pos/' + myRole).transaction(p => (p || 0) + step);
                         sessionRef.child('scores/' + myRole).transaction(s => (s || 0) + 1);
-                        applyEffect(true, b); // ТУУРА ЭФФЕКТ
-                    } else {
-                        applyEffect(false, b); // КАТА ЭФФЕКТ
-                    }
+                        applyEffect(true, b);
+                    } else { applyEffect(false, b); }
                 };
                 optArea.appendChild(b);
             });
@@ -370,13 +365,10 @@
     function finishGame() {
         sessionRef.once('value', s => {
             const data = s.val();
-            const boyS = data.scores.boy || 0;
-            const girlS = data.scores.girl || 0;
-            const boyN = data.players.boy;
-            const girlN = data.players.girl;
+            const boyS = data.scores.boy || 0, girlS = data.scores.girl || 0;
+            const boyN = data.players.boy, girlN = data.players.girl;
             document.getElementById('leaderboard-screen').style.display = "flex";
-            const winText = boyS > girlS ? `${boyN} ЖЕҢДИ! 🏆` : (girlS > boyS ? `${girlN} ЖЕҢДИ! 🏆` : "ТЕҢ ЧЫГУУ! 🤝");
-            document.getElementById('winner-text').innerText = winText;
+            document.getElementById('winner-text').innerText = boyS > girlS ? `${boyN} ЖЕҢДИ! 🏆` : (girlS > boyS ? `${girlN} ЖЕҢДИ! 🏆` : "ТЕҢ ЧЫГУУ! 🤝");
             const ranks = [{n: boyN, s: boyS}, {n: girlN, s: girlS}].sort((a,b) => b.s - a.s);
             document.getElementById('rank-content').innerHTML = ranks.map((r, i) => `
                 <div class="rank-item"><span>${i+1}. ${r.n}</span><span>${r.s} балл</span></div>
