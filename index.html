@@ -7,26 +7,41 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        /* Сиздин мурунку стилдериңиз сакталат */
         * { box-sizing: border-box; touch-action: manipulation; }
         body, html { margin: 0; padding: 0; width: 100%; min-height: 100%; overflow-x: hidden; font-family: 'Segoe UI', sans-serif; background: #fff; }
         
-        #setup-screen, #level-screen, #sync-overlay {
-            position: fixed; inset: 0; background: white; z-index: 3000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;
+        /* 1. БАШКЫ МЕНЮ ЖАНА ФОН */
+        #level-screen {
+            position: fixed; inset: 0; 
+            background: url('kyz-jygyt.png') no-repeat center center; 
+            background-size: cover; 
+            z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
         }
-        #level-screen { display: none; overflow-y: auto; }
-        #sync-overlay { background: rgba(0,0,0,0.95); color: white; display: none; z-index: 4000; }
+        .level-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px; border-radius: 20px; width: 100%; max-width: 500px; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .level-grid { display: grid; grid-template-columns: 1fr; gap: 8px; width: 100%; margin-top: 15px; }
+        .level-btn { 
+            padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 12px; 
+            cursor: pointer; font-weight: bold; font-size: 14px; text-align: left; transition: 0.3s;
+        }
+        .level-btn:hover { background: #27ae60; }
 
-        .level-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 500px; margin-top: 20px; }
-        .level-btn { padding: 20px; background: #f3f3f3; border: 2px solid #2ecc71; border-radius: 15px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .level-btn:hover { background: #2ecc71; color: white; }
+        /* ЭКРАНДАР */
+        #setup-screen, #sync-overlay {
+            position: fixed; inset: 0; background: white; z-index: 3000;
+            display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;
+        }
+        #sync-overlay { background: rgba(0,0,0,0.95); color: white; z-index: 4000; }
 
-        .game-area { position: relative; width: 100%; height: 40vh; border-bottom: 2px solid #eee; background: #fdfdfd; }
+        /* ОЮН ТАЛААСЫ */
+        .game-area { position: relative; width: 100%; height: 40vh; border-bottom: 2px solid #eee; background: #fdfdfd; display: none; }
         .rider { position: absolute; bottom: 10px; width: 25%; max-width: 140px; transition: left 0.4s ease; }
         .rider video { width: 100%; border-radius: 10px; }
         
-        .quiz-area { width: 100%; min-height: 60vh; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .quiz-area { width: 100%; min-height: 60vh; padding: 15px; display: none; flex-direction: column; align-items: center; }
         .btn { padding: 15px; margin: 5px; width: 100%; max-width: 400px; border-radius: 12px; border: 1px solid #ddd; background: #fff; font-weight: 600; cursor: pointer; }
         .correct-flash { background-color: #2ecc71 !important; color: white !important; }
         .wrong-flash { background-color: #e74c3c !important; color: white !important; }
@@ -34,7 +49,6 @@
         #countdown { font-size: 80px; font-weight: bold; color: #2ecc71; }
         .primary-btn { padding: 15px 30px; background: #2ecc71; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
         .secondary-btn { padding: 15px 30px; background: #3498db; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        
         #leaderboard-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 6000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
     </style>
 </head>
@@ -42,10 +56,25 @@
 
 <audio id="bgMusic" loop><source src="music.mp3" type="audio/mpeg"></audio>
 
+<div id="level-screen">
+    <div class="level-container">
+        <h2 style="color:#2c3e50; margin:0;">КЫЗ КУУМАЙ</h2>
+        <p style="color:#7f8c8d; font-size:14px;">Деңгээлди тандаңыз:</p>
+        <div class="level-grid">
+            <button class="level-btn" onclick="selectLevel(0)">1️⃣ МЕХАНИКА</button>
+            <button class="level-btn" onclick="selectLevel(1)">2️⃣ МОЛЕКУЛАЛЫК ФИЗИКА ЖАНА ТЕРМОДИНАМИКА</button>
+            <button class="level-btn" onclick="selectLevel(2)">3️⃣ ЭЛЕКТРОДИНАМИКА</button>
+            <button class="level-btn" onclick="selectLevel(3)">4️⃣ ТЕРМЕЛҮҮЛӨР ЖАНА ТОЛКУНДАР</button>
+            <button class="level-btn" onclick="selectLevel(4)">5️⃣ ОПТИКА</button>
+            <button class="level-btn" onclick="selectLevel(5)">6️⃣ АТОМДУК ЖАНА ЯДРОЛУК ФИЗИКА</button>
+            <button class="level-btn" onclick="selectLevel(6)">7️⃣ АСТРОНОМИЯ</button>
+        </div>
+    </div>
+</div>
+
 <div id="setup-screen">
-    <h2>Кыз Куумай: Физика</h2>
+    <h2 id="display-level-name" style="color:#2ecc71;"></h2>
     <input type="text" id="player-name" placeholder="Атыңыз..." style="padding:15px; border-radius:10px; width:250px; margin-bottom:15px; border: 1px solid #ccc;">
-    
     <div id="room-controls">
         <button class="primary-btn" onclick="createRoom()">Бөлмө түзүү</button>
         <div style="margin: 10px 0;">— же —</div>
@@ -55,26 +84,13 @@
     <p id="wait-status" style="margin-top:20px; font-weight: bold; color: #e67e22;"></p>
 </div>
 
-<div id="level-screen">
-    <h2 id="level-title">Деңгээлди тандаңыз</h2>
-    <div class="level-grid">
-        <button class="level-btn" onclick="selectLevel(0)">1. Кинематика</button>
-        <button class="level-btn" onclick="selectLevel(1)">2. Динамика</button>
-        <button class="level-btn" onclick="selectLevel(2)">3. Энергия</button>
-        <button class="level-btn" onclick="selectLevel(3)">4. Басым</button>
-        <button class="level-btn" onclick="selectLevel(4)">5. Жылуулук</button>
-        <button class="level-btn" onclick="selectLevel(5)">6. Электр</button>
-        <button class="level-btn" onclick="selectLevel(6)">7. Атомдук физика</button>
-    </div>
-</div>
-
 <div id="sync-overlay">
     <div id="sync-info">Даярсызбы?</div>
     <button id="master-start" class="primary-btn" onclick="triggerReady()">МЕН ДАЯРМЫН!</button>
     <div id="countdown"></div>
 </div>
 
-<div class="game-area">
+<div class="game-area" id="ui-top">
     <div id="boy-container" class="rider" style="left: 5%;">
         <video id="v-boy" muted loop playsinline><source src="boy_run.mp4" type="video/mp4"></video>
     </div>
@@ -83,7 +99,7 @@
     </div>
 </div>
 
-<div class="quiz-area">
+<div class="quiz-area" id="ui-bottom">
     <div id="q-text" style="font-weight: bold; font-size: 18px; margin-bottom: 20px; text-align: center;"></div>
     <div id="options" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
 </div>
@@ -100,40 +116,27 @@
 
     let myRole = "", myName = "", sessionRef = null, gameActive = false;
     let selectedLevelIdx = null;
+    const levelNames = ["МЕХАНИКА", "МОЛЕКУЛАЛЫК ФИЗИКА", "ЭЛЕКТРОДИНАМИКА", "ТЕРМЕЛҮҮЛӨР", "ОПТИКА", "АТОМДУК ФИЗИКА", "АСТРОНОМИЯ"];
 
-    // СУРООЛОРДУ ДЕҢГЭЭЛДЕРГЕ БӨЛҮҮ
     const levelQuestions = [
-        [ // 1. Кинематика
-            {q:"Ылдамдыктын формуласы?", a:["v=s/t","v=at","v=m/s"], c:"v=s/t"},
-            {q:"Траектория деген эмне?", a:["Кыймыл сызыгы","Аралык","Убакыт"], c:"Кыймыл сызыгы"}
-        ],
-        [ // 2. Динамика
-            {q:"Ньютондун 2-закону?", a:["F=ma","F=mg","P=mv"], c:"F=ma"},
-            {q:"Күчтүн бирдиги?", a:["Ньютон","Жоуль","Ватт"], c:"Ньютон"}
-        ],
-        [ // 3. Энергия
-            {q:"Кинетикалык энергия?", a:["Ek=mv²/2","Ep=mgh","A=Fs"], c:"Ek=mv²/2"},
-            {q:"Жумуштун бирдиги?", a:["Жоуль","Ватт","Паскаль"], c:"Жоуль"}
-        ],
-        [ // 4. Басым
-            {q:"Басымдын бирдиги?", a:["Паскаль","Ньютон","Ампер"], c:"Паскаль"},
-            {q:"Архимед күчү?", a:["F=ρgV","F=ma","P=mg"], c:"F=ρgV"}
-        ],
-        [ // 5. Жылуулук
-            {q:"Заттын 3 абалы?", a:["Катуу, суюк, газ","Ысык, муздак","Жумшак, катуу"], c:"Катуу, суюк, газ"},
-            {q:"Температураны өлчөөчү курал?", a:["Термометр","Барометр","Омметр"], c:"Термометр"}
-        ],
-        [ // 6. Электр
-            {q:"Ток күчүнүн бирдиги?", a:["Ампер","Вольт","Ом"], c:"Ампер"},
-            {q:"Ом закону?", a:["I=U/R","P=UI","A=Fs"], c:"I=U/R"}
-        ],
-        [ // 7. Атомдук
-            {q:"Атомдун борборунда эмне бар?", a:["Ядро","Электрон","Протон"], c:"Ядро"},
-            {q:"Электрондун заряды?", a:["Терс","Оң","Нейтрал"], c:"Терс"}
-        ]
+        [{q:"Ылдамдыктын формуласы?", a:["v=s/t","v=at"], c:"v=s/t"}], // 1
+        [{q:"Заттын 3 абалы?", a:["Катуу, суюк, газ","Ысык, муздак"], c:"Катуу, суюк, газ"}], // 2
+        [{q:"Ток күчүнүн бирдиги?", a:["Ампер","Вольт"], c:"Ампер"}], // 3
+        [{q:"Жыштыктын бирдиги?", a:["Герц","Секунда"], c:"Герц"}], // 4
+        [{q:"Жарыктын ылдамдыгы?", a:["300 000 км/с","1000 км/с"], c:"300 000 км/с"}], // 5
+        [{q:"Атомдун борборунда эмне бар?", a:["Ядро","Электрон"], c:"Ядро"}], // 6
+        [{q:"Күн системасында канча планета бар?", a:["8","9"], c:"8"}] // 7
     ];
 
     let currentQuestions = [];
+
+    // МЕНЮДАН ДЕҢГЭЭЛ ТАНДОО
+    function selectLevel(idx) {
+        selectedLevelIdx = idx;
+        document.getElementById('level-screen').style.display = "none";
+        document.getElementById('setup-screen').style.display = "flex";
+        document.getElementById('display-level-name').innerText = levelNames[idx];
+    }
 
     function createRoom() {
         myName = document.getElementById('player-name').value;
@@ -148,15 +151,11 @@
             players: { boy: myName }, 
             sync: { boy: false, girl: false }, 
             pos: { boy: 0, girl: 0 }, 
-            scores: { boy: 0, girl: 0 },
-            level: -1 // Деңгээл тандала элек
+            level: selectedLevelIdx 
         });
 
         sessionRef.child('players/girl').on('value', s => {
-            if(s.exists()) {
-                document.getElementById('setup-screen').style.display = "none";
-                document.getElementById('level-screen').style.display = "flex";
-            }
+            if(s.exists()) startSync();
         });
     }
 
@@ -168,34 +167,17 @@
         sessionRef = db.ref('rooms/' + code);
         sessionRef.once('value', s => {
             if (s.exists() && !s.val().players.girl) {
+                selectedLevelIdx = s.val().level;
                 sessionRef.child('players/girl').set(myName);
-                document.getElementById('setup-screen').style.display = "none";
-                document.getElementById('wait-status').innerText = "Админ деңгээл тандап жатат...";
-                
-                // Деңгээл тандалганын байкоо
-                sessionRef.child('level').on('value', snap => {
-                    if (snap.val() !== -1) {
-                        selectedLevelIdx = snap.val();
-                        currentQuestions = levelQuestions[selectedLevelIdx];
-                        startSync();
-                    }
-                });
-            }
+                startSync();
+            } else { alert("Ката же бөлмө толо!"); }
         });
     }
 
-    function selectLevel(idx) {
-        if (myRole === 'boy') {
-            sessionRef.child('level').set(idx);
-            selectedLevelIdx = idx;
-            currentQuestions = levelQuestions[idx];
-            startSync();
-        }
-    }
-
     function startSync() {
-        document.getElementById('level-screen').style.display = "none";
+        currentQuestions = levelQuestions[selectedLevelIdx];
         document.getElementById('setup-screen').style.display = "none";
+        document.getElementById('level-screen').style.display = "none";
         document.getElementById('sync-overlay').style.display = "flex";
         
         sessionRef.child('sync').on('value', s => {
@@ -207,15 +189,13 @@
     function triggerReady() {
         sessionRef.child('sync/' + myRole).set(true);
         document.getElementById('master-start').style.display = "none";
-        document.getElementById('bgMusic').play().then(() => document.getElementById('bgMusic').pause());
     }
 
     function startCountdown() {
         gameActive = true;
         let c = 3;
-        const display = document.getElementById('countdown');
         const timer = setInterval(() => {
-            display.innerText = c > 0 ? c : "GO!";
+            document.getElementById('countdown').innerText = c > 0 ? c : "GO!";
             if (c === 0) { clearInterval(timer); setTimeout(launch, 500); }
             c--;
         }, 1000);
@@ -223,6 +203,8 @@
 
     function launch() {
         document.getElementById('sync-overlay').style.display = "none";
+        document.getElementById('ui-top').style.display = "block";
+        document.getElementById('ui-bottom').style.display = "flex";
         document.getElementById('bgMusic').play();
         document.getElementById('v-boy').play();
         document.getElementById('v-girl').play();
@@ -231,13 +213,11 @@
 
     function renderGame() {
         let qIdx = 0;
-        
         function showQ() {
             if (qIdx >= currentQuestions.length) return finishGame();
             const q = currentQuestions[qIdx];
             document.getElementById('q-text').innerText = q.q;
             const optArea = document.getElementById('options'); optArea.innerHTML = "";
-            
             q.a.forEach(txt => {
                 const b = document.createElement('button');
                 b.className = 'btn'; b.innerText = txt;
@@ -245,18 +225,14 @@
                     if (txt === q.c) {
                         let step = (myRole === 'boy') ? 5 : 3;
                         sessionRef.child('pos/' + myRole).transaction(p => (p || 0) + step);
-                        sessionRef.child('scores/' + myRole).transaction(s => (s || 0) + 1);
                         b.classList.add('correct-flash');
                         setTimeout(() => { qIdx++; showQ(); }, 500);
-                    } else {
-                        b.classList.add('wrong-flash');
-                    }
+                    } else { b.classList.add('wrong-flash'); }
                 };
                 optArea.appendChild(b);
             });
         }
         showQ();
-
         sessionRef.child('pos').on('value', s => {
             const p = s.val();
             if (p) {
