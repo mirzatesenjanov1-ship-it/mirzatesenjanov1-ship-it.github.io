@@ -3,216 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Кыз Куумай: Физика Online</title>
+    <title>Кыз Куумай: Физика Деңгээлдер</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1495571814896964"
-     crossorigin="anonymous"></script>
     <style>
+        /* Сиздин мурунку стилдериңиз сакталат */
         * { box-sizing: border-box; touch-action: manipulation; }
-        body, html { margin: 0; padding: 0; width: 100%; min-height: 100%; overflow-x: hidden; font-family: 'Segoe UI', sans-serif; background: #fff; scroll-behavior: smooth; }
+        body, html { margin: 0; padding: 0; width: 100%; min-height: 100%; overflow-x: hidden; font-family: 'Segoe UI', sans-serif; background: #fff; }
         
-        #setup-screen, #sync-overlay, #level-screen {
+        #setup-screen, #level-screen, #sync-overlay {
             position: fixed; inset: 0; background: white; z-index: 3000;
             display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;
         }
-        #sync-overlay { background: rgba(0,0,0,0.95); color: white; display: none; z-index: 4000; }
         #level-screen { display: none; overflow-y: auto; }
+        #sync-overlay { background: rgba(0,0,0,0.95); color: white; display: none; z-index: 4000; }
+
+        .level-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 500px; margin-top: 20px; }
+        .level-btn { padding: 20px; background: #f3f3f3; border: 2px solid #2ecc71; border-radius: 15px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .level-btn:hover { background: #2ecc71; color: white; }
 
         .game-area { position: relative; width: 100%; height: 40vh; border-bottom: 2px solid #eee; background: #fdfdfd; }
         .rider { position: absolute; bottom: 10px; width: 25%; max-width: 140px; transition: left 0.4s ease; }
         .rider video { width: 100%; border-radius: 10px; }
         
-        .emoji-bubble {
-            position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
-            background: white; border-radius: 20px; padding: 10px; font-size: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 5000; animation: bounceUp 1.5s forwards;
-        }
-        @keyframes bounceUp { 0% { opacity: 0; top: 0; } 20% { opacity: 1; } 100% { opacity: 0; top: -100px; } }
-
         .quiz-area { width: 100%; min-height: 60vh; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .btn { padding: 15px; margin: 5px; width: 100%; max-width: 400px; border-radius: 12px; border: 1px solid #ddd; background: #fff; font-weight: 600; cursor: pointer; }
+        .correct-flash { background-color: #2ecc71 !important; color: white !important; }
+        .wrong-flash { background-color: #e74c3c !important; color: white !important; }
         
-        .btn { 
-            padding: 15px; margin: 5px; width: 100%; max-width: 400px; border-radius: 12px; 
-            border: 1px solid #ddd; background: #fff; font-weight: 600; cursor: pointer;
-            transition: transform 0.1s ease, background-color 0.3s ease;
-        }
-        .btn:active { transform: scale(0.95); }
-
-        .level-btn { background: #f8f9fa; border: 2px solid #2ecc71; color: #2c3e50; font-size: 16px; margin: 8px; }
-        .level-btn:hover { background: #2ecc71; color: white; }
-
-        .correct-flash { background-color: #2ecc71 !important; color: white !important; animation: pulse-green 0.5s; }
-        .wrong-flash { background-color: #e74c3c !important; color: white !important; animation: shake 0.4s; }
-
-        @keyframes pulse-green { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-10px); } 50% { transform: translateX(10px); } 75% { transform: translateX(-10px); } 100% { transform: translateX(0); } }
-
-        #countdown { font-size: 100px; font-weight: bold; color: #2ecc71; }
-        .primary-btn { padding: 15px 30px; background: #2ecc71; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin: 5px; }
-        .secondary-btn { padding: 15px 30px; background: #3498db; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin: 5px; }
-
-        #boosty-modal, #leaderboard-screen {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 6000;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            color: white; padding: 30px; text-align: center;
-        }
-        .ads-container { width: 100%; max-width: 400px; height: 60px; background: #f0f0f0; margin: 10px 0; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; color: #666; font-size: 12px; }
-        .rank-list { width: 80%; max-width: 300px; margin-top: 20px; text-align: left; }
-        .rank-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #444; }
-
-        .content-section { max-width: 900px; margin: 40px auto; padding: 20px; color: #2c3e50; line-height: 1.8; text-align: left; }
-        .content-section h2 { color: #2ecc71; border-left: 5px solid #2ecc71; padding-left: 15px; }
-        footer { background: #2c3e50; color: white; padding: 40px 20px; text-align: center; margin-top: 50px; }
-        footer a { color: #2ecc71; text-decoration: none; margin: 0 10px; font-weight: bold; }
+        #countdown { font-size: 80px; font-weight: bold; color: #2ecc71; }
+        .primary-btn { padding: 15px 30px; background: #2ecc71; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .secondary-btn { padding: 15px 30px; background: #3498db; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        
+        #leaderboard-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 6000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
     </style>
 </head>
 <body>
 
-<audio id="bgMusic" loop preload="auto"><source src="music.mp3" type="audio/mpeg"></audio>
+<audio id="bgMusic" loop><source src="music.mp3" type="audio/mpeg"></audio>
 
 <div id="setup-screen">
-    <div class="ads-container">Google AdSense Реклама</div>
     <h2>Кыз Куумай: Физика</h2>
     <input type="text" id="player-name" placeholder="Атыңыз..." style="padding:15px; border-radius:10px; width:250px; margin-bottom:15px; border: 1px solid #ccc;">
     
     <div id="room-controls">
         <button class="primary-btn" onclick="createRoom()">Бөлмө түзүү</button>
-        <div style="margin: 10px 0; color: #7f8c8d;">— же код менен кирүү —</div>
-        <input type="text" id="room-input" placeholder="Код (мис: 223)" style="padding:15px; border-radius:10px; width:150px; border: 1px solid #ccc;">
+        <div style="margin: 10px 0;">— же —</div>
+        <input type="text" id="room-input" placeholder="Код..." style="padding:15px; border-radius:10px; width:150px; border: 1px solid #ccc;">
         <button class="secondary-btn" onclick="joinRoom()">Кошулуу</button>
     </div>
     <p id="wait-status" style="margin-top:20px; font-weight: bold; color: #e67e22;"></p>
 </div>
 
 <div id="level-screen">
-    <h2 style="color: #2ecc71;">Деңгээлди тандаңыз</h2>
-    <div style="display: flex; flex-direction: column; width: 100%; max-width: 400px;">
-        <button class="btn level-btn" onclick="selectLevel(1)">1. МЕХАНИКА</button>
-        <button class="btn level-btn" onclick="selectLevel(2)">2. МОЛЕКУЛАЛЫК ФИЗИКА</button>
-        <button class="btn level-btn" onclick="selectLevel(3)">3. ЭЛЕКТРОДИНАМИКА</button>
-        <button class="btn level-btn" onclick="selectLevel(4)">4. ТЕРМЕЛҮҮЛӨР ЖАНА ТОЛКУНДАР</button>
-        <button class="btn level-btn" onclick="selectLevel(5)">5. ОПТИКА</button>
-        <button class="btn level-btn" onclick="selectLevel(6)">6. АТОМДУК ЖАНА ЯДРОЛУК ФИЗИКА</button>
-        <button class="btn level-btn" onclick="selectLevel(7)">7. АСТРОНОМИЯ</button>
+    <h2 id="level-title">Деңгээлди тандаңыз</h2>
+    <div class="level-grid">
+        <button class="level-btn" onclick="selectLevel(0)">1. Кинематика</button>
+        <button class="level-btn" onclick="selectLevel(1)">2. Динамика</button>
+        <button class="level-btn" onclick="selectLevel(2)">3. Энергия</button>
+        <button class="level-btn" onclick="selectLevel(3)">4. Басым</button>
+        <button class="level-btn" onclick="selectLevel(4)">5. Жылуулук</button>
+        <button class="level-btn" onclick="selectLevel(5)">6. Электр</button>
+        <button class="level-btn" onclick="selectLevel(6)">7. Атомдук физика</button>
     </div>
 </div>
 
-<div id="boosty-modal">
-    <h2 style="color:#f1c40f;">Тыныгуу! 💡</h2>
-    <p style="font-size: 18px; margin-bottom: 20px;">20 суроо өттү! Окууну тездетүү үчүн жазылыңыз:</p>
-    <a href="https://boosty.to/astrophysica/purchase/3915502?ssource=DIRECT&share=subscription_link" target="_blank" style="background:#f1c40f; color:black; padding:15px 40px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:18px;">BOOSTY'ГЕ ЖАЗЫЛУУ</a>
-    <button onclick="closeModal()" style="margin-top:25px; background:none; border:1px solid white; color:white; padding:10px 20px; cursor:pointer; border-radius:5px;">Оюнду улантуу</button>
-</div>
-
-<div id="leaderboard-screen">
-    <h1 id="winner-text" style="color:#2ecc71;">Ким жеңди?</h1>
-    <div class="rank-list" id="rank-content"></div>
-    <div class="ads-container" style="margin-top:30px;">Google AdSense Реклама</div>
-    <button class="secondary-btn" onclick="location.reload()" style="margin-top:20px;">Кайра ойноо</button>
-</div>
-
 <div id="sync-overlay">
-    <div id="sync-info">Түгөй табылды!</div>
-    <button id="master-start" class="primary-btn" style="font-size: 20px; padding: 20px 40px;" onclick="triggerReady()">МЕН ДАЯРМЫН! 🚀</button>
+    <div id="sync-info">Даярсызбы?</div>
+    <button id="master-start" class="primary-btn" onclick="triggerReady()">МЕН ДАЯРМЫН!</button>
     <div id="countdown"></div>
 </div>
 
 <div class="game-area">
     <div id="boy-container" class="rider" style="left: 5%;">
-        <div id="boy-emoji-spot"></div>
         <video id="v-boy" muted loop playsinline><source src="boy_run.mp4" type="video/mp4"></video>
     </div>
     <div id="girl-container" class="rider" style="left: 45%;">
-        <div id="girl-emoji-spot"></div>
         <video id="v-girl" muted loop playsinline><source src="girl_run.mp4" type="video/mp4"></video>
     </div>
 </div>
 
 <div class="quiz-area">
-    <div id="level-title" style="color: #2ecc71; font-weight: bold; margin-bottom: 5px;"></div>
     <div id="q-text" style="font-weight: bold; font-size: 18px; margin-bottom: 20px; text-align: center;"></div>
     <div id="options" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
-    <div style="margin-top: 20px; display: flex; gap: 15px;">
-        <button onclick="sendEmoji('😊')" style="font-size: 30px; border:none; background:none; cursor:pointer;">😊</button>
-        <button onclick="sendEmoji('😂')" style="font-size: 30px; border:none; background:none; cursor:pointer;">😂</button>
-        <button onclick="sendEmoji('💪')" style="font-size: 30px; border:none; background:none; cursor:pointer;">💪</button>
-        <button onclick="sendEmoji('🚀')" style="font-size: 30px; border:none; background:none; cursor:pointer;">🚀</button>
-    </div>
 </div>
 
-<section class="content-section">
-    <h2>Кыз Куумай Физика: Улуттук оюн жана Илим</h2>
-    <p>Бул долбоор кыргыз элинин байыркы "Кыз куумай" оюнун санариптик форматта жандандырып, аны физика илими менен терең айкалыштырат. 7 башка деңгээл аркылуу физиканын бардык негизги бөлүмдөрүн үйрөнүүгө болот.</p>
-</section>
-
-<footer>
-    <div style="margin-bottom: 20px;">
-        <a href="about.html">Биз жөнүндө</a> | <a href="privacy.html">Купуялык саясаты</a> | <a href="contact.html">Байланыш</a>
-    </div>
-    <p>© 2026 Mirza Tesenjanov. "Кыз Куумай: Физика Online"</p>
-</footer>
+<div id="leaderboard-screen">
+    <h1 id="winner-text">Жеңүүчү!</h1>
+    <button class="secondary-btn" onclick="location.reload()">Башкы меню</button>
+</div>
 
 <script>
     const firebaseConfig = { databaseURL: "https://kyz-kuumay-game-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let myRole = "", myName = "", sessionRef = null, gameActive = false, selectedLvl = 1;
+    let myRole = "", myName = "", sessionRef = null, gameActive = false;
+    let selectedLevelIdx = null;
 
-    const quizData = {
-        1: { title: "МЕХАНИКА", questions: [
-            {q:"Ылдамдыктын формуласы?", a:["v=s/t","F=ma","P=mg"], c:"v=s/t"},
-            {q:"Ылдамдануунун бирдиги?", a:["м/с²","м/с","кг"], c:"м/с²"},
+    // СУРООЛОРДУ ДЕҢГЭЭЛДЕРГЕ БӨЛҮҮ
+    const levelQuestions = [
+        [ // 1. Кинематика
+            {q:"Ылдамдыктын формуласы?", a:["v=s/t","v=at","v=m/s"], c:"v=s/t"},
+            {q:"Траектория деген эмне?", a:["Кыймыл сызыгы","Аралык","Убакыт"], c:"Кыймыл сызыгы"}
+        ],
+        [ // 2. Динамика
             {q:"Ньютондун 2-закону?", a:["F=ma","F=mg","P=mv"], c:"F=ma"},
-            {q:"Күчтүн бирдиги?", a:["Ньютон","Жоуль","Ватт"], c:"Ньютон"},
-            {q:"Эркин түшүү ылдамдануусу (g)?", a:["9.8 м/с²","10 м/с²","5 м/с²"], c:"9.8 м/с²"}
-        ]},
-        2: { title: "МОЛЕКУЛАЛЫК ФИЗИКА", questions: [
-            {q:"Заттын үч абалы?", a:["Катуу, суюк, газ","Муздак, ысык","Жумшак"], c:"Катуу, суюк, газ"},
-            {q:"Диффузия деген эмне?", a:["Өз алдынча аралашуу","Эрүү","Катуулануу"], c:"Өз алдынча аралашуу"},
-            {q:"Температураны өлчөөчү курал?", a:["Термометр","Барометр","Омметр"], c:"Термометр"},
-            {q:"Күйүүчү майдын энергиясы?", a:["Q=qm","A=Fs","P=mg"], c:"Q=qm"},
-            {q:"Ысык суунун тыгыздыгы?", a:["Муздактан аз","Муздактан көп","Барабар"], c:"Муздактан аз"}
-        ]},
-        3: { title: "ЭЛЕКТРОДИНАМИКА", questions: [
+            {q:"Күчтүн бирдиги?", a:["Ньютон","Жоуль","Ватт"], c:"Ньютон"}
+        ],
+        [ // 3. Энергия
+            {q:"Кинетикалык энергия?", a:["Ek=mv²/2","Ep=mgh","A=Fs"], c:"Ek=mv²/2"},
+            {q:"Жумуштун бирдиги?", a:["Жоуль","Ватт","Паскаль"], c:"Жоуль"}
+        ],
+        [ // 4. Басым
+            {q:"Басымдын бирдиги?", a:["Паскаль","Ньютон","Ампер"], c:"Паскаль"},
+            {q:"Архимед күчү?", a:["F=ρgV","F=ma","P=mg"], c:"F=ρgV"}
+        ],
+        [ // 5. Жылуулук
+            {q:"Заттын 3 абалы?", a:["Катуу, суюк, газ","Ысык, муздак","Жумшак, катуу"], c:"Катуу, суюк, газ"},
+            {q:"Температураны өлчөөчү курал?", a:["Термометр","Барометр","Омметр"], c:"Термометр"}
+        ],
+        [ // 6. Электр
             {q:"Ток күчүнүн бирдиги?", a:["Ампер","Вольт","Ом"], c:"Ампер"},
-            {q:"Ом закону?", a:["I=U/R","P=UI","A=Fs"], c:"I=U/R"},
-            {q:"Чыңалуунун бирдиги?", a:["Вольт","Ампер","Ватт"], c:"Вольт"},
-            {q:"Электрондун заряды?", a:["Терс","Оң","Нейтралдуу"], c:"Терс"},
-            {q:"Турактуу ток булагы?", a:["Батарея","Трансформатор","Лампа"], c:"Батарея"}
-        ]},
-        4: { title: "ТЕРМЕЛҮҮЛӨР ЖАНА ТОЛКУНДАР", questions: [
-            {q:"Термелүү жыштыгынын бирдиги?", a:["Герц","Секунда","Метр"], c:"Герц"},
-            {q:"Үн кайда таралбайт?", a:["Вакуумда","Сууда","Темирде"], c:"Вакуумда"},
-            {q:"Адам кулагы уккан жыштык?", a:["20-20000 Гц","0-10 Гц","100к Гц"], c:"20-20000 Гц"},
-            {q:"Термелүү периоду?", a:["T=t/n","T=1/v","Экөө тең"], c:"Экөө тең"},
-            {q:"Математикалык маятник?", a:["T=2π√(l/g)","v=s/t","F=ma"], c:"T=2π√(l/g)"}
-        ]},
-        5: { title: "ОПТИКА", questions: [
-            {q:"Жарыктын ылдамдыгы?", a:["300 000 км/с","300 км/с","1000 км/с"], c:"300 000 км/с"},
-            {q:"Линзанын оптикалык күчү?", a:["Диоптрия","Метр","Ньютон"], c:"Диоптрия"},
-            {q:"Жарыктын чагылуу закону?", a:["Бурчтар барабар","Барабар эмес","90°"], c:"Бурчтар барабар"},
-            {q:"Ак жарыктын курамында канча түс бар?", a:["7","3","10"], c:"7"},
-            {q:"Күзгүдөгү сүрөттөлүш кандай?", a:["Жалган","Чыныгы","Жок"], c:"Жалган"}
-        ]},
-        6: { title: "АТОМДУК ЖАНА ЯДРОЛУК ФИЗИКА", questions: [
-            {q:"Атомдун борборунда эмне бар?", a:["Ядро","Электрон","Боштук"], c:"Ядро"},
-            {q:"Протондун заряды?", a:["Оң","Терс","Нейтралдуу"], c:"Оң"},
-            {q:"Нейтрондун заряды?", a:["Жок","Оң","Терс"], c:"Жок"},
-            {q:"Фотоэффектти ким түшүндүргөн?", a:["Эйнштейн","Ньютон","Паскаль"], c:"Эйнштейн"},
-            {q:"Радиоактивдүүлүктү ким ачкан?", a:["Беккерель","Кюри","Экөө тең"], c:"Экөө тең"}
-        ]},
-        7: { title: "АСТРОНОМИЯ", questions: [
-            {q:"Күн энергиясынын булагы?", a:["Термоядролук реакция","Көмүр","Шамал"], c:"Термоядролук реакция"},
-            {q:"Күн системасындагы эң чоң планета?", a:["Юпитер","Сатурн","Марс"], c:"Юпитер"},
-            {q:"Жерге эң жакын жылдыз?", a:["Күн","Сириус","Полярдык"], c:"Күн"},
-            {q:"Галактикабыздын аты?", a:["Саманчынын жолу","Андромеда","Марс"], c:"Саманчынын жолу"},
-            {q:"Күндөн кийинки эң жакын жылдыз?", a:["Проксима Центавра","Вега","Альтаир"], c:"Проксима Центавра"}
+            {q:"Ом закону?", a:["I=U/R","P=UI","A=Fs"], c:"I=U/R"}
+        ],
+        [ // 7. Атомдук
+            {q:"Атомдун борборунда эмне бар?", a:["Ядро","Электрон","Протон"], c:"Ядро"},
+            {q:"Электрондун заряды?", a:["Терс","Оң","Нейтрал"], c:"Терс"}
         ]
-    };
+    ];
 
-    function closeModal() { document.getElementById('boosty-modal').style.display = "none"; }
+    let currentQuestions = [];
 
     function createRoom() {
         myName = document.getElementById('player-name').value;
@@ -220,74 +141,73 @@
         myRole = "boy";
         const code = Math.floor(100 + Math.random() * 899);
         document.getElementById('room-controls').style.display = "none";
-        document.getElementById('wait-status').innerHTML = `Код: <span style="font-size:35px; color:#2ecc71;">${code}</span><br>Экинчи оюнчуга бериңиз...`;
+        document.getElementById('wait-status').innerHTML = `Код: ${code}<br>Күтүңүз...`;
         
-        const ref = db.ref('rooms/' + code);
-        ref.set({ players: { boy: myName }, sync: { boy: false, girl: false }, pos: { boy: 0, girl: 0 }, scores: { boy: 0, girl: 0 }, level: 1 });
-        ref.child('players/girl').on('value', s => { if(s.exists()) showLevelSelect(code); });
-        ref.onDisconnect().remove();
+        sessionRef = db.ref('rooms/' + code);
+        sessionRef.set({ 
+            players: { boy: myName }, 
+            sync: { boy: false, girl: false }, 
+            pos: { boy: 0, girl: 0 }, 
+            scores: { boy: 0, girl: 0 },
+            level: -1 // Деңгээл тандала элек
+        });
+
+        sessionRef.child('players/girl').on('value', s => {
+            if(s.exists()) {
+                document.getElementById('setup-screen').style.display = "none";
+                document.getElementById('level-screen').style.display = "flex";
+            }
+        });
     }
 
     function joinRoom() {
         myName = document.getElementById('player-name').value;
         const code = document.getElementById('room-input').value;
-        if (!myName || !code) return alert("Атыңызды жана кодду жазыңыз!");
+        if (!myName || !code) return alert("Маалыматты толтуруңуз!");
         myRole = "girl";
-        const ref = db.ref('rooms/' + code);
-        ref.once('value', s => {
+        sessionRef = db.ref('rooms/' + code);
+        sessionRef.once('value', s => {
             if (s.exists() && !s.val().players.girl) {
-                ref.child('players/girl').set(myName);
-                showLevelSelect(code);
-            } else { alert("Код ката же бөлмө толо!"); }
+                sessionRef.child('players/girl').set(myName);
+                document.getElementById('setup-screen').style.display = "none";
+                document.getElementById('wait-status').innerText = "Админ деңгээл тандап жатат...";
+                
+                // Деңгээл тандалганын байкоо
+                sessionRef.child('level').on('value', snap => {
+                    if (snap.val() !== -1) {
+                        selectedLevelIdx = snap.val();
+                        currentQuestions = levelQuestions[selectedLevelIdx];
+                        startSync();
+                    }
+                });
+            }
         });
     }
 
-    function showLevelSelect(id) {
-        sessionRef = db.ref('rooms/' + id);
-        document.getElementById('setup-screen').style.display = "none";
+    function selectLevel(idx) {
         if (myRole === 'boy') {
-            document.getElementById('level-screen').style.display = "flex";
-        } else {
-            document.getElementById('wait-status').innerText = "Биринчи оюнчу деңгээл тандап жатат...";
-            sessionRef.child('level').on('value', s => { if(s.val()) { selectedLvl = s.val(); initSession(); } });
+            sessionRef.child('level').set(idx);
+            selectedLevelIdx = idx;
+            currentQuestions = levelQuestions[idx];
+            startSync();
         }
     }
 
-    function selectLevel(num) {
-        selectedLvl = num;
-        sessionRef.child('level').set(num);
-        initSession();
-    }
-
-    function initSession() {
+    function startSync() {
         document.getElementById('level-screen').style.display = "none";
+        document.getElementById('setup-screen').style.display = "none";
         document.getElementById('sync-overlay').style.display = "flex";
         
         sessionRef.child('sync').on('value', s => {
             const sync = s.val();
             if (sync && sync.boy && sync.girl && !gameActive) startCountdown();
         });
-
-        sessionRef.child('chat').on('value', s => {
-            const msg = s.val();
-            if (msg) {
-                const spot = document.getElementById(msg.role + '-emoji-spot');
-                const bubble = document.createElement('div');
-                bubble.className = 'emoji-bubble'; bubble.innerText = msg.emoji;
-                spot.appendChild(bubble); setTimeout(() => bubble.remove(), 1500);
-            }
-        });
     }
 
     function triggerReady() {
-        const music = document.getElementById('bgMusic');
-        const v1 = document.getElementById('v-boy');
-        const v2 = document.getElementById('v-girl');
-        music.play().then(() => music.pause());
-        v1.play().then(() => v1.pause());
-        v2.play().then(() => v2.pause());
         sessionRef.child('sync/' + myRole).set(true);
         document.getElementById('master-start').style.display = "none";
+        document.getElementById('bgMusic').play().then(() => document.getElementById('bgMusic').pause());
     }
 
     function startCountdown() {
@@ -309,44 +229,28 @@
         renderGame();
     }
 
-    function sendEmoji(emoji) {
-        if (sessionRef) sessionRef.child('chat').set({ role: myRole, emoji: emoji, t: Date.now() });
-    }
-
     function renderGame() {
-        const currentLvlData = quizData[selectedLvl];
-        const questions = currentLvlData.questions;
-        document.getElementById('level-title').innerText = currentLvlData.title;
         let qIdx = 0;
-
-        function applyEffect(isCorrect, element) {
-            const effectClass = isCorrect ? 'correct-flash' : 'wrong-flash';
-            element.classList.add(effectClass);
-            setTimeout(() => {
-                element.classList.remove(effectClass);
-                if (isCorrect) { qIdx++; showQ(); }
-            }, 500);
-        }
-
+        
         function showQ() {
-            if (qIdx > 0 && qIdx % 20 === 0) { document.getElementById('boosty-modal').style.display = "flex"; }
-            if (qIdx >= questions.length) { finishGame(); return; }
-            
-            const q = questions[qIdx];
+            if (qIdx >= currentQuestions.length) return finishGame();
+            const q = currentQuestions[qIdx];
             document.getElementById('q-text').innerText = q.q;
             const optArea = document.getElementById('options'); optArea.innerHTML = "";
-            let shuffledAnswers = [...q.a].sort(() => Math.random() - 0.5);
-
-            shuffledAnswers.forEach(txt => {
-                const b = document.createElement('button'); 
+            
+            q.a.forEach(txt => {
+                const b = document.createElement('button');
                 b.className = 'btn'; b.innerText = txt;
                 b.onclick = () => {
                     if (txt === q.c) {
-                        let step = (myRole === 'boy') ? 2.5 : 1.2;
+                        let step = (myRole === 'boy') ? 5 : 3;
                         sessionRef.child('pos/' + myRole).transaction(p => (p || 0) + step);
                         sessionRef.child('scores/' + myRole).transaction(s => (s || 0) + 1);
-                        applyEffect(true, b);
-                    } else { applyEffect(false, b); }
+                        b.classList.add('correct-flash');
+                        setTimeout(() => { qIdx++; showQ(); }, 500);
+                    } else {
+                        b.classList.add('wrong-flash');
+                    }
                 };
                 optArea.appendChild(b);
             });
@@ -363,17 +267,7 @@
     }
 
     function finishGame() {
-        sessionRef.once('value', s => {
-            const data = s.val();
-            const boyS = data.scores.boy || 0, girlS = data.scores.girl || 0;
-            const boyN = data.players.boy, girlN = data.players.girl;
-            document.getElementById('leaderboard-screen').style.display = "flex";
-            document.getElementById('winner-text').innerText = boyS > girlS ? `${boyN} ЖЕҢДИ! 🏆` : (girlS > boyS ? `${girlN} ЖЕҢДИ! 🏆` : "ТЕҢ ЧЫГУУ! 🤝");
-            const ranks = [{n: boyN, s: boyS}, {n: girlN, s: girlS}].sort((a,b) => b.s - a.s);
-            document.getElementById('rank-content').innerHTML = ranks.map((r, i) => `
-                <div class="rank-item"><span>${i+1}. ${r.n}</span><span>${r.s} балл</span></div>
-            `).join('');
-        });
+        document.getElementById('leaderboard-screen').style.display = "flex";
     }
 </script>
 </body>
