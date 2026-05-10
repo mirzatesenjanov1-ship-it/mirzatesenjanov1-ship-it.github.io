@@ -10,7 +10,6 @@
      crossorigin="anonymous"></script>
     <style>
         * { box-sizing: border-box; touch-action: manipulation; }
-        /* Өзгөртүү: overflow: hidden; алынып салынды, скролл иштеши үчүн */
         body, html { margin: 0; padding: 0; width: 100%; min-height: 100%; overflow-x: hidden; font-family: 'Segoe UI', sans-serif; background: #fff; scroll-behavior: smooth; }
         
         #setup-screen, #sync-overlay {
@@ -31,8 +30,33 @@
         @keyframes bounceUp { 0% { opacity: 0; top: 0; } 20% { opacity: 1; } 100% { opacity: 0; top: -100px; } }
 
         .quiz-area { width: 100%; min-height: 60vh; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .btn { padding: 15px; margin: 5px; width: 100%; max-width: 400px; border-radius: 12px; border: 1px solid #ddd; background: #fff; font-weight: 600; cursor: pointer; }
         
+        /* Эффект берилген баскычтардын стили */
+        .btn { 
+            padding: 15px; margin: 5px; width: 100%; max-width: 400px; border-radius: 12px; 
+            border: 1px solid #ddd; background: #fff; font-weight: 600; cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.3s ease;
+        }
+        .btn:active { transform: scale(0.95); }
+
+        /* Туура жана ката жооптордун анимациясы */
+        .correct-flash { background-color: #2ecc71 !important; color: white !important; animation: pulse-green 0.5s; }
+        .wrong-flash { background-color: #e74c3c !important; color: white !important; animation: shake 0.4s; }
+
+        @keyframes pulse-green {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+
         #countdown { font-size: 100px; font-weight: bold; color: #2ecc71; }
         .primary-btn { padding: 15px 30px; background: #2ecc71; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin: 5px; }
         .secondary-btn { padding: 15px 30px; background: #3498db; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin: 5px; }
@@ -46,7 +70,6 @@
         .rank-list { width: 80%; max-width: 300px; margin-top: 20px; text-align: left; }
         .rank-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #444; }
 
-        /* Жаңы маалыматтык блоктун стилдери */
         .content-section { max-width: 900px; margin: 40px auto; padding: 20px; color: #2c3e50; line-height: 1.8; text-align: left; }
         .content-section h2 { color: #2ecc71; border-left: 5px solid #2ecc71; padding-left: 15px; }
         footer { background: #2c3e50; color: white; padding: 40px 20px; text-align: center; margin-top: 50px; }
@@ -123,12 +146,6 @@
         <strong>Эмне үчүн бул маанилүү?</strong> Заманбап билим берүүдө "Геймификация" же оюн аркылуу үйрөнүү — эң натыйжалуу ыкмалардын бири. 
         Биз Mirza Tesenjanov менен биргеликте физиканы жөн гана формулалар эмес, жандуу процесс катары көрсөтүүнү максат кылдык.
     </p>
-    <h3>Окуу материалдары</h3>
-    <ul>
-        <li>Кинематика жана Динамиканын негиздери</li>
-        <li>Электр тогу жана Магнитизм кубулуштары</li>
-        <li>Астрофизика жана Кванттык физикага киришүү</li>
-    </ul>
 </section>
 
 <footer>
@@ -274,7 +291,7 @@
             {q:"Магниттин канча уюлу бар?", a:["2","1","4"], c:"2"},
             {q:"Жарыктын чагылуу закону?", a:["Бурчтар барабар","Барабар эмес","90 градус"], c:"Бурчтар барабар"},
             {q:"Кулон закону эмнени сүрөттөйт?", a:["Заряддардын өз ара аракети","Кыймылды","Жылуулукту"], c:"Заряддардын өз ара аракети"},
-            {q:"Конденсатор эмнени топтойт?", a:["Электр зарядын","Жылуулукту","Сууну"], c:"Электр зарядын"},
+            {q:"Конденсатор эмнени топтойт?", a:["Электр зарядын","Жылуулукту","Сууну"], c:"Конденсатор эмнени топтойт?"},
             {q:"Турактуу ток булагы?", a:["Батарея","Трансформатор","Лампочка"], c:"Батарея"},
             {q:"Күч моменти?", a:["M=Fd","A=Fs","P=mg"], c:"M=Fd"},
             {q:"Паскаль закону эмнеге тиешелүү?", a:["Суюктук жана газга","Катуу нерсеге","Болгону ташка"], c:"Суюктук жана газга"},
@@ -298,6 +315,20 @@
         ];
 
         let qIdx = 0;
+
+        // Жоопторго эффект берүүчү функция
+        function applyEffect(isCorrect, element) {
+            const effectClass = isCorrect ? 'correct-flash' : 'wrong-flash';
+            element.classList.add(effectClass);
+            setTimeout(() => {
+                element.classList.remove(effectClass);
+                if (isCorrect) {
+                    qIdx++;
+                    showQ();
+                }
+            }, 500);
+        }
+
         function showQ() {
             if (qIdx > 0 && qIdx % 20 === 0) { document.getElementById('boosty-modal').style.display = "flex"; }
             if (qIdx >= questions.length) { finishGame(); return; }
@@ -309,13 +340,17 @@
             let shuffledAnswers = [...q.a].sort(() => Math.random() - 0.5);
 
             shuffledAnswers.forEach(txt => {
-                const b = document.createElement('button'); b.className = 'btn'; b.innerText = txt;
+                const b = document.createElement('button'); 
+                b.className = 'btn'; 
+                b.innerText = txt;
                 b.onclick = () => {
                     if (txt === q.c) {
                         let step = (myRole === 'boy') ? 2.5 : 1.2;
                         sessionRef.child('pos/' + myRole).transaction(p => (p || 0) + step);
                         sessionRef.child('scores/' + myRole).transaction(s => (s || 0) + 1);
-                        qIdx++; showQ();
+                        applyEffect(true, b); // ТУУРА ЭФФЕКТ
+                    } else {
+                        applyEffect(false, b); // КАТА ЭФФЕКТ
                     }
                 };
                 optArea.appendChild(b);
