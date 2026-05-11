@@ -8,12 +8,12 @@
         /* НЕГИЗГИ СТИЛДЕР */
         body { overflow: hidden; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000; }
         
-        /* Меню экрандары үчүн фондук сүрөт (kyz-jygyt.png) */
+        /* Бардык экрандар үчүн kyz-jygyt.png фон катары колдонулат */
         .screen { 
             position: fixed; width: 100%; height: 100%; 
             display: none; flex-direction: column; align-items: center; 
             justify-content: center; 
-            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('kyz-jygyt.png') center/cover no-repeat; 
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('kyz-jygyt.png') center/cover no-repeat; 
         }
 
         /* МЕНЮ БАСКЫЧТАРЫ */
@@ -58,11 +58,17 @@
 </head>
 <body>
 
-    <audio id="menuMusic" loop>
+    <audio id="menuMusic" loop preload="auto">
         <source src="music-menu.mp3" type="audio/mpeg">
     </audio>
 
-    <div id="level-screen" class="screen" style="display: flex;">
+    <div id="start-screen" class="screen" style="display: flex;">
+        <img src="kyz-jygyt.png" style="width: 200px; border-radius: 50%; border: 5px solid #f1c40f; margin-bottom: 20px;">
+        <h1 style="color: white; text-align: center; text-shadow: 2px 2px 10px #000;">КЫЗ КУУМАЙ: ФИЗИКА</h1>
+        <button class="btn" style="background: #f1c40f; color: #000; font-size: 20px;" onclick="initGame()">ОЮНДУ БАШТОО</button>
+    </div>
+
+    <div id="level-screen" class="screen">
         <h2 style="color: #f1c40f; text-shadow: 2px 2px 5px #000;">ФИЗИКА: БӨЛҮМДҮ ТАНДАҢЫЗ</h2>
         <div class="level-container">
             <button class="btn level-btn" onclick="selectLevel(0)">1. МЕХАНИКА</button>
@@ -78,16 +84,13 @@
     <div id="setup-screen" class="screen">
         <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; backdrop-filter: blur(10px); width: 85%; max-width: 350px; text-align: center;">
             <h2 id="display-level-name" style="color: #fff; font-size: 18px; margin-bottom: 20px;"></h2>
-            
             <input type="text" id="player-name" placeholder="Атыңызды жазыңыз" class="btn" style="background: #fff; color: #333;">
-            
             <div id="room-controls">
                 <button class="btn" style="background: #e67e22; color: white;" onclick="createRoom()">Бөлмө ачуу</button>
                 <div style="color: #eee; margin: 10px 0;">— же —</div>
                 <input type="number" id="room-input" placeholder="Кодду жазыңыз" class="btn" style="background: #fff; color: #333;">
                 <button class="btn" style="background: #3498db; color: white;" onclick="joinRoom()">Оюнга кошулуу</button>
             </div>
-            
             <div id="wait-status" style="color: #f1c40f; margin-top: 15px; font-size: 14px;"></div>
             <button class="btn" style="background: #95a5a6; width: 120px; margin-top: 20px;" onclick="location.reload()">Артка</button>
         </div>
@@ -116,6 +119,14 @@
     <script>
         const firebaseConfig = { databaseURL: "https://kyz-kuumay-game-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(firebaseConfig);
+
+        // ЖАҢЫ ФУНКЦИЯ: Музыканы иштетип, менюну ачат
+        function initGame() {
+            const music = document.getElementById('menuMusic');
+            music.play().catch(e => console.log("Музыка иштеши үчүн клик керек"));
+            document.getElementById('start-screen').style.display = "none";
+            document.getElementById('level-screen').style.display = "flex";
+        }
     </script>
     
     <script src="questions.js"></script>
