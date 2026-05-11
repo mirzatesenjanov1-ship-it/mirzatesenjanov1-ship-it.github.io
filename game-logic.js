@@ -144,7 +144,7 @@ function startCountdown() {
     let c = 3;
     const timer = setInterval(() => {
         const cdDisplay = document.getElementById('countdown');
-        cdDisplay.innerText = c > 0 ? c : "АЛГА!";
+        if(cdDisplay) cdDisplay.innerText = c > 0 ? c : "АЛГА!";
         if (c === 0) { 
             clearInterval(timer); 
             setTimeout(launch, 500); 
@@ -157,9 +157,8 @@ function startCountdown() {
 function launch() {
     stopMenuMusic();
     playGameMusic();
-    listenReactions(); // Эмоцияларды тыңшоо
+    listenReactions();
 
-    // Видеолорду иштетүү жана кайталоо (loop)
     const bVideo = document.getElementById('boyVideo');
     const gVideo = document.getElementById('girlVideo');
     if (bVideo && gVideo) {
@@ -184,14 +183,21 @@ function renderGame() {
     let qIdx = 0;
     let gameFinished = false;
     const questions = allQuestions[selectedLevelIdx] || [];
-    const shuffledQuestions = questions.sort(() => Math.random() - 0.5);
+    // Суроолорду аралаштыруу, бирок эки тарапка бирдей иретте болушу үчүн
+    // (Firebase'де суроолордун тартибин сактоо сунушталат, бирок бул жерде жөнөкөй калтырабыз)
+    const currentQuestions = questions.slice(0, 30); 
 
     function showQ() {
-        if (gameFinished || qIdx >= shuffledQuestions.length) return;
+        if (gameFinished || qIdx >= currentQuestions.length) {
+            if (qIdx >= currentQuestions.length && !gameFinished) {
+                checkWinner("УБАКЫТ БҮТТҮ: Кыз качып кетти! 🐎");
+            }
+            return;
+        }
         
         sessionRef.child('turn').once('value', s => {
             const currentTurn = s.val();
-            const q = shuffledQuestions[qIdx];
+            const q = currentQuestions[qIdx];
             const optArea = document.getElementById('options');
             const qText = document.getElementById('q-text');
 
@@ -205,7 +211,6 @@ function renderGame() {
 
             optArea.innerHTML = "";
 
-            // Эмоция баскычтарын суроонун үстүнө кошуу
             const emojiBar = document.createElement('div');
             emojiBar.style.gridColumn = "1 / span 2";
             emojiBar.style.display = "flex";
@@ -233,12 +238,11 @@ function renderGame() {
                     let isCorrect = (txt === q.c);
                     
                     if (isCorrect) {
-                        moveStep = 1.5;
-                        // Аппак фонду жашыл кылып жаркылдатуу
+                        // 30 суроого ылайыкталган кадам (3.5 * 30 = 105%)
+                        moveStep = 3.5;
                         document.getElementById('game-field').style.backgroundColor = "#d4edda";
                     } else {
-                        moveStep = -1.0;
-                        // Аппак фонду кызыл кылып жаркылдатуу
+                        moveStep = -1.5;
                         document.getElementById('game-field').style.backgroundColor = "#f8d7da";
                     }
                     
@@ -246,36 +250,44 @@ function renderGame() {
                         document.getElementById('game-field').style.backgroundColor = "#ffffff";
                     }, 400);
 
-                    // Позицияны жана кезекти алмаштыруу
                     const nextTurn = myRole === "boy" ? "girl" : "boy";
                     sessionRef.update({
                         ['pos/' + myRole]: firebase.database.ServerValue.increment(moveStep),
-                        turn: nextTurn
+                        turn: nextTurn,
+                        lastQ: qIdx // Суроо индексин синхрондоо
                     });
-
-                    qIdx++;
                 };
                 optArea.appendChild(b);
             });
         });
     }
 
-    // Кезек алмашканда суроону жаңылоо
     sessionRef.child('turn').on('value', () => {
-        showQ();
+        sessionRef.child('lastQ').once('value', s => {
+            qIdx = (s.val() || 0) + 1;
+            showQ();
+        });
     });
 
     sessionRef.child('pos').on('value', s => {
         const p = s.val();
         if (p && !gameFinished) {
+            // Баштапкы позициялар: Жигит 5%, Кыз 45% (Арасы 40%)
             const boyPos = 5 + (p.boy || 0);
-            const girlPos = 40 + (p.girl || 0);
+            const girlPos = 45 + (p.girl || 0);
             
             document.getElementById('boy-container').style.left = boyPos + "%";
             document.getElementById('girl-container').style.left = girlPos + "%";
             
-            if (boyPos >= girlPos) checkWinner("ЖИГИТ КУУП ЖЕТТИ! 🏇");
-            else if (girlPos >= 90) checkWinner("КЫЗ МААРАГА ЖЕТТИ! 🏁");
+            // ЖЕҢИШ ШАРТТАРЫ:
+            // 1. Жигиттин аты кыздын куйругуна (артына) жеткенде
+            if (boyPos >= (girlPos - 2)) {
+                checkWinner("ЖИГИТ КЫЗГА ЖЕТТИ! 🏇 Жигит утту!");
+            } 
+            // 2. Кыз маарага (95%) жеткенде
+            else if (girlPos >= 95) {
+                checkWinner("КЫЗ КАЧЫП КЕТТИ! 🐎 Кыз утту!");
+            }
         }
     });
 
@@ -286,17 +298,16 @@ function renderGame() {
         sessionRef.child('turn').off();
         sessionRef.child('reactions').off();
         
-        // Видеолорду токтотуу
         document.getElementById('boyVideo').pause();
         document.getElementById('girlVideo').pause();
         
         const lb = document.getElementById('leaderboard-screen');
         lb.style.display = "flex";
         lb.innerHTML = `
-            <div style="background: white; padding: 30px; border-radius: 20px; text-align: center; color: #333;">
-                <h1 style="margin:0">${reason}</h1>
+            <div style="background: white; padding: 30px; border-radius: 20px; text-align: center; color: #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                <h1 style="margin:0; color: #2c3e50;">${reason}</h1>
                 <p style="font-size: 18px; margin: 20px 0;">Оюн аяктады</p>
-                <button class="btn" style="background: #3498db; color: white;" onclick="location.reload()">МЕНЮГА КАЙТУУ</button>
+                <button class="btn" style="background: #3498db; color: white; padding: 10px 30px;" onclick="location.reload()">МЕНЮГА КАЙТУУ</button>
             </div>
         `;
         setTimeout(() => { sessionRef.remove(); }, 600000);
