@@ -132,6 +132,16 @@ function renderGame() {
     const questions = allQuestions[selectedLevelIdx] || [];
     const currentQuestions = questions.slice(0, 30); 
 
+    // Варианттарды аралаштыруучу функция
+    function shuffleOptions(array) {
+        let arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
     function showQ() {
         if (gameFinished) return;
         sessionRef.child('turn').once('value', s => {
@@ -144,7 +154,11 @@ function renderGame() {
             if (turn === myRole) {
                 optArea.classList.remove('disabled-overlay');
                 qText.innerText = q.q;
-                q.a.forEach(txt => {
+
+                // Варианттарды аралаштырып чыгаруу
+                const shuffled = shuffleOptions(q.a);
+
+                shuffled.forEach(txt => {
                     const b = document.createElement('button');
                     b.className = 'btn opt-btn';
                     b.innerText = txt;
