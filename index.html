@@ -887,117 +887,15 @@
         ]
     ];
 
-   function initAudio() {
-        const menu = document.getElementById('menuMusic');
-        if (menu.paused && !gameActive) {
-            menu.play().catch(e => console.log("Audio play blocked"));
-        }
-    }
-
-    function selectLevel(idx) {
-        selectedLevelIdx = idx;
-        document.getElementById('level-screen').style.display = "none";
-        document.getElementById('setup-screen').style.display = "flex";
-        document.getElementById('display-level-name').innerText = levelNames[idx];
-    }
-
-    function createRoom() {
-        myName = document.getElementById('player-name').value;
-        if (!myName) return alert("Атыңызды жазыңыз!");
-        myRole = "boy";
-        const code = Math.floor(100 + Math.random() * 899);
-        document.getElementById('room-controls').style.display = "none";
-        document.getElementById('wait-status').innerHTML = `Код: ${code}<br>Күтүңүз...`;
-        sessionRef = db.ref('rooms/' + code);
-        sessionRef.set({ players: { boy: myName }, sync: { boy: false, girl: false }, pos: { boy: 0, girl: 0 }, level: selectedLevelIdx });
-        sessionRef.child('players/girl').on('value', s => { if(s.exists()) startSync(); });
-    }
-
-    function joinRoom() {
-        myName = document.getElementById('player-name').value;
-        const code = document.getElementById('room-input').value;
-        if (!myName || !code) return alert("Маалыматты толтуруңуз!");
-        myRole = "girl";
-        sessionRef = db.ref('rooms/' + code);
-        sessionRef.once('value', s => {
-            if (s.exists() && !s.val().players.girl) {
-                selectedLevelIdx = s.val().level;
-                sessionRef.child('players/girl').set(myName);
-                startSync();
-            } else { alert("Ката же бөлмө толо!"); }
-        });
-    }
-
-    function sendEmoji(emoji) {
-        if (sessionRef) {
-            sessionRef.child('emojis').set({ msg: emoji, sender: myRole, time: Date.now() });
-        }
-    }
-
-    function startSync() {
-        document.getElementById('setup-screen').style.display = "none";
-        document.getElementById('sync-overlay').style.display = "flex";
-        sessionRef.child('sync').on('value', s => {
-            const sync = s.val();
-            if (sync && sync.boy && sync.girl && !gameActive) startCountdown();
-        });
-        
-        // Эмодзи угуучуну иштетүү
-        sessionRef.child('emojis').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) displayEmoji(data.sender, data.msg);
-        });
-    }
-
-    function displayEmoji(sender, msg) {
-        const container = document.getElementById(sender === "boy" ? "boy-container" : "girl-container");
-        const oldEmoji = container.querySelector('.emoji-msg');
-        if (oldEmoji) oldEmoji.remove();
-        const emojiEl = document.createElement('div');
-        emojiEl.className = 'emoji-msg';
-        emojiEl.innerText = msg;
-        container.appendChild(emojiEl);
-        setTimeout(() => emojiEl.remove(), 2000);
-    }
-
-    function triggerReady() { 
-        sessionRef.child('sync/' + myRole).set(true); 
-        document.getElementById('master-start').style.display = "none"; 
-    }
-
-    function startCountdown() {
-        gameActive = true;
-        let c = 3;
-        const timer = setInterval(() => {
-            document.getElementById('countdown').innerText = c > 0 ? c : "GO!";
-            if (c === 0) { clearInterval(timer); setTimeout(launch, 500); }
-            c--;
-        }, 1000);
-    }
-
-    function launch() {
-        document.getElementById('menuMusic').pause();
-        document.getElementById('sync-overlay').style.display = "none";
-        document.getElementById('ui-top').style.display = "block";
-        document.getElementById('ui-bottom').style.display = "flex";
-        
-        // Видео жана музыканы ойнотуу
-        const v1 = document.getElementById('v-boy');
-        const v2 = document.getElementById('v-girl');
-        const bgm = document.getElementById('bgMusic');
-        
-        Promise.all([v1.play(), v2.play(), bgm.play()]).catch(e => console.log("Playback interaction needed"));
-        
-        renderGame();
-    }
-
-    function renderGame() {
+  function renderGame() {
         let qIdx = 0;
+        let gameFinished = false; // Оюн аяктаганын көзөмөлдөө
         const questions = allQuestions[selectedLevelIdx] || [{q:"Суроолор жок", a:["..."], c:"..."}];
 
         function showQ() {
+            if (gameFinished) return;
             if (qIdx >= questions.length) {
-                document.getElementById('leaderboard-screen').style.display = "flex";
+                checkWinner("Суроолор бүттү!");
                 return;
             }
             const q = questions[qIdx];
@@ -1009,24 +907,77 @@
                 b.className = 'btn'; b.innerText = txt;
                 b.onclick = () => {
                     if (txt === q.c) {
+                        // Туура жооп үчүн жылыш
                         sessionRef.child('pos/' + myRole).transaction(p => (p || 0) + (myRole === 'boy' ? 1.5 : 1.2));
                         b.classList.add('correct-flash');
                         setTimeout(() => { qIdx++; showQ(); }, 400);
-                    } else { b.classList.add('wrong-flash'); }
+                    } else { 
+                        b.classList.add('wrong-flash'); 
+                    }
                 };
                 optArea.appendChild(b);
             });
         }
         
         showQ();
+
+        // Позицияларды жана жеңүүчүнү реалдуу убакытта текшерүү
         sessionRef.child('pos').on('value', s => {
             const p = s.val();
-            if (p) {
-                document.getElementById('boy-container').style.left = (5 + (p.boy || 0)) + "%";
-                document.getElementById('girl-container').style.left = (45 + (p.girl || 0)) + "%";
+            if (p && !gameFinished) {
+                const boyPos = 5 + (p.boy || 0);
+                const girlPos = 45 + (p.girl || 0);
+                
+                document.getElementById('boy-container').style.left = boyPos + "%";
+                document.getElementById('girl-container').style.left = girlPos + "%";
+
+                // Утуу шарттары
+                if (boyPos >= girlPos) { 
+                    checkWinner("Жигит кууп жетти!"); 
+                } else if (girlPos >= 85) { 
+                    checkWinner("Кыз качып кетти!"); 
+                }
             }
         });
+
+        function checkWinner(reason) {
+            if (gameFinished) return;
+            gameFinished = true;
+
+            // Маалыматтарды алуу жана экранга чыгаруу
+            sessionRef.child('players').once('value', pSnap => {
+                const names = pSnap.val();
+                sessionRef.child('pos').once('value', posSnap => {
+                    const finalPos = posSnap.val() || {boy: 0, girl: 0};
+                    
+                    // Ким алдыда экенин аныктоо
+                    const isBoyAhead = (finalPos.boy + 5) >= (finalPos.girl + 45);
+                    const winnerName = isBoyAhead ? names.boy : names.girl;
+
+                    // Музыканы жана видеону токтотуу
+                    document.getElementById('bgMusic').pause();
+                    document.getElementById('v-boy').pause();
+                    document.getElementById('v-girl').pause();
+
+                    // Лидербордду толтуруу
+                    const screen = document.getElementById('leaderboard-screen');
+                    screen.style.display = "flex";
+                    screen.innerHTML = `
+                        <h1 style="color:#f1c40f; margin-bottom:5px;">🏆 ${winnerName} ЖЕҢДИ!</h1>
+                        <p style="color:#bdc3c7; margin-bottom:20px;">${reason}</p>
+                        <div style="background:rgba(255,255,255,0.1); padding:20px; border-radius:15px; width:280px; text-align:left;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                                <span>🐎 ${names.boy}:</span> 
+                                <span>${Math.floor(finalPos.boy)} упай</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span>💃 ${names.girl}:</span> 
+                                <span>${Math.floor(finalPos.girl)} упай</span>
+                            </div>
+                        </div>
+                        <button class="secondary-btn" style="margin-top:20px;" onclick="location.reload()">Башкы меню</button>
+                    `;
+                });
+            });
+        }
     }
-</script>
-</body>
-</html>
