@@ -183,14 +183,22 @@ function renderGame() {
     let qIdx = 0;
     let gameFinished = false;
     const questions = allQuestions[selectedLevelIdx] || [];
-    // Суроолорду аралаштыруу, бирок эки тарапка бирдей иретте болушу үчүн
-    // (Firebase'де суроолордун тартибин сактоо сунушталат, бирок бул жерде жөнөкөй калтырабыз)
     const currentQuestions = questions.slice(0, 30); 
 
     function showQ() {
         if (gameFinished || qIdx >= currentQuestions.length) {
             if (qIdx >= currentQuestions.length && !gameFinished) {
-                checkWinner("УБАКЫТ БҮТТҮ: Кыз качып кетти! 🐎");
+                // Суроолор бүткөндө ким алдыда экенин текшерүү
+                sessionRef.child('pos').once('value', snapshot => {
+                    const p = snapshot.val();
+                    const bP = 5 + (p.boy || 0);
+                    const gP = 45 + (p.girl || 0);
+                    if (bP >= (gP - 2)) {
+                        checkWinner("Жигит кызга жетти! 🏇 Жигит утту!");
+                    } else {
+                        checkWinner("Кыз качып кетти! 🐎 Кыз утту!");
+                    }
+                });
             }
             return;
         }
@@ -238,7 +246,6 @@ function renderGame() {
                     let isCorrect = (txt === q.c);
                     
                     if (isCorrect) {
-                        // 30 суроого ылайыкталган кадам (3.5 * 30 = 105%)
                         moveStep = 3.5;
                         document.getElementById('game-field').style.backgroundColor = "#d4edda";
                     } else {
@@ -254,7 +261,7 @@ function renderGame() {
                     sessionRef.update({
                         ['pos/' + myRole]: firebase.database.ServerValue.increment(moveStep),
                         turn: nextTurn,
-                        lastQ: qIdx // Суроо индексин синхрондоо
+                        lastQ: qIdx 
                     });
                 };
                 optArea.appendChild(b);
@@ -272,21 +279,17 @@ function renderGame() {
     sessionRef.child('pos').on('value', s => {
         const p = s.val();
         if (p && !gameFinished) {
-            // Баштапкы позициялар: Жигит 5%, Кыз 45% (Арасы 40%)
             const boyPos = 5 + (p.boy || 0);
             const girlPos = 45 + (p.girl || 0);
             
             document.getElementById('boy-container').style.left = boyPos + "%";
             document.getElementById('girl-container').style.left = girlPos + "%";
             
-            // ЖЕҢИШ ШАРТТАРЫ:
-            // 1. Жигиттин аты кыздын куйругуна (артына) жеткенде
             if (boyPos >= (girlPos - 2)) {
-                checkWinner("ЖИГИТ КЫЗГА ЖЕТТИ! 🏇 Жигит утту!");
+                checkWinner("Жигит кызга жетти! 🏇 Жигит утту!");
             } 
-            // 2. Кыз маарага (95%) жеткенде
             else if (girlPos >= 95) {
-                checkWinner("КЫЗ КАЧЫП КЕТТИ! 🐎 Кыз утту!");
+                checkWinner("Кыз качып кетти! 🐎 Кыз утту!");
             }
         }
     });
@@ -304,12 +307,17 @@ function renderGame() {
         const lb = document.getElementById('leaderboard-screen');
         lb.style.display = "flex";
         lb.innerHTML = `
-            <div style="background: white; padding: 30px; border-radius: 20px; text-align: center; color: #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                <h1 style="margin:0; color: #2c3e50;">${reason}</h1>
-                <p style="font-size: 18px; margin: 20px 0;">Оюн аяктады</p>
-                <button class="btn" style="background: #3498db; color: white; padding: 10px 30px;" onclick="location.reload()">МЕНЮГА КАЙТУУ</button>
+            <div style="background: white; padding: 40px; border-radius: 30px; text-align: center; color: #333; box-shadow: 0 15px 50px rgba(0,0,0,0.3); border: 4px solid #f1c40f;">
+                <h1 style="margin:0; color: #e67e22; font-size: 32px;">🏆 ОЮН АЯКТАДЫ</h1>
+                <h2 style="margin: 20px 0; color: #2c3e50;">${reason}</h2>
+                <div style="background: #f9f9f9; padding: 20px; border-radius: 15px; margin-bottom: 25px;">
+                    <h3 style="margin:0 0 10px 0; color: #7f8c8d;">РЕЙТИНГ</h3>
+                    <p style="font-size: 20px; margin: 5px 0;">🥇 <b>${reason.includes("Жигит утту") ? "Жигит" : "Кыз"}</b></p>
+                    <p style="font-size: 18px; margin: 5px 0; opacity: 0.6;">🥈 ${reason.includes("Жигит утту") ? "Кыз" : "Жигит"}</p>
+                </div>
+                <button class="btn" style="background: linear-gradient(to right, #3498db, #2980b9); color: white; padding: 15px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; border: none; font-size: 18px;" onclick="location.reload()">БАШКЫ МЕНЮ</button>
             </div>
         `;
-        setTimeout(() => { sessionRef.remove(); }, 600000);
+        setTimeout(() => { if(sessionRef) sessionRef.remove(); }, 600000);
     }
 }
