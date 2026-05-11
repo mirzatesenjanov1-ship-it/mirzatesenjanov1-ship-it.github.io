@@ -14,6 +14,7 @@
             display: none; flex-direction: column; align-items: center; 
             justify-content: center; 
             background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('kyz-jygyt.png') center/cover no-repeat; 
+            z-index: 200;
         }
 
         /* МЕНЮ БАСКЫЧТАРЫ */
@@ -57,22 +58,17 @@
         #q-text { color: white; text-align: center; font-size: 18px; margin-bottom: 15px; min-height: 50px; }
         #options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         
-        .opt-btn { background: #3498db; color: white; padding: 12px; border-radius: 10px; border: none; font-weight: bold; }
+        .opt-btn { background: #3498db; color: white; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
 
         /* ЖООП БЕРҮҮ ЭФФЕКТТЕРИ */
-        .flash-green { animation: flashG 0.6s ease; }
-        .flash-red { animation: flashR 0.6s ease; }
-        @keyframes flashG { 0% { background: #ffffff; } 50% { background: #2ecc71; } 100% { background: #ffffff; } }
-        @keyframes flashR { 0% { background: #ffffff; } 50% { background: #e74c3c; } 100% { background: #ffffff; } }
+        .disabled-overlay { pointer-events: none; opacity: 0.6; }
 
         /* ЭМОЦИЯЛАР АНИМАЦИЯСЫ */
         @keyframes floatUp {
             0% { transform: translate(-50%, 0); opacity: 1; }
             100% { transform: translate(-50%, -120px); opacity: 0; }
         }
-        .emoji-pop { pointer-events: none; user-select: none; }
-
-        .disabled-overlay { pointer-events: none; opacity: 0.6; }
+        .emoji-pop { pointer-events: none; user-select: none; z-index: 500; }
 
         /* СКРОЛЛДУ СУЛУУЛОО */
         .level-container::-webkit-scrollbar { width: 6px; }
@@ -151,7 +147,9 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <script>
+        // FIREBASE ЖӨНДӨӨСҮ
         const firebaseConfig = { databaseURL: "https://kyz-kuumay-game-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(firebaseConfig);
 
