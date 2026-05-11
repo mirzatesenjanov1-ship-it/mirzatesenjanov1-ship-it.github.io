@@ -191,27 +191,38 @@ function renderGame() {
         sessionRef.child('pos').off();
         sessionRef.child('turn').off();
         stopGameMusic();
-        playMenuMusic(); // Кайра баштапкы музыка
+        playMenuMusic(); // Меню музыкасын кайра баштоо
 
-        // 2. Видеолорду жашыруу
+        // 2. Оюн талаасын жана суроолорду жашыруу
         document.getElementById('game-field').style.display = "none";
         document.getElementById('ui-bottom').style.display = "none";
 
-        // 3. Жаңы жыйынтык экраны
+        // 3. Жыйынтык экранын иштетүү
         const lb = document.getElementById('leaderboard-screen');
         lb.style.display = "flex";
-        lb.style.zIndex = "5000";
+        lb.style.zIndex = "10000"; // Эң үстүнкү катмар
+        lb.style.position = "fixed";
+        lb.style.top = "0";
+        lb.style.left = "0";
+        lb.style.width = "100%";
+        lb.style.height = "100%";
 
-        // Ким утканына жараша сүрөт тандоо
-        let winnerImg = reason.includes("Жигит") ? "boy_run.png" : "girl_run.png";
-        if (reason.includes("жетти")) winnerImg = "boy_run.png"; // Жигит жетти
-        else winnerImg = "girl_run.png"; // Кыз качты
+        // Жеңүүчүгө жараша сүрөт тандоо (жетти - жигиттин сүрөтү, качты - кыздын сүрөтү)
+        let winnerImg = reason.includes("жетти") ? "boy_run.png" : "girl_run.png";
 
         lb.innerHTML = `
-            <div style="background: rgba(0,0,0,0.9); width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white;">
-                <img src="${winnerImg}" style="width:250px; height:250px; border-radius:50%; border: 5px solid #f1c40f; margin-bottom:20px; object-fit:cover;">
-                <h1 style="font-size: 32px; color: #f1c40f; text-align:center; padding: 0 20px;">${reason}</h1>
-                <button class="btn" onclick="location.reload()" style="background:#f1c40f; color:black; margin-top:30px; font-size:20px; width:200px;">КАЙРА БАШТОО</button>
+            <div style="background: rgba(0,0,0,0.95); width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; text-align:center;">
+                <div style="position: relative; margin-bottom: 20px;">
+                    <img src="${winnerImg}" style="width:280px; height:280px; border-radius:50%; border: 8px solid #f1c40f; object-fit:cover; box-shadow: 0 0 30px #f1c40f;">
+                    <div style="position: absolute; bottom: 10px; right: 10px; background: #f1c40f; color: black; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 18px;">
+                        🏆 ЖЕҢҮҮЧҮ
+                    </div>
+                </div>
+                <h1 style="font-size: 36px; color: #f1c40f; margin: 10px 0; padding: 0 20px;">${reason}</h1>
+                <p style="font-size: 18px; color: #ccc; margin-bottom: 30px;">Билимиңиз сизге ийгилик алып келди!</p>
+                <button class="btn" onclick="location.reload()" style="background:#f1c40f; color:black; font-size:22px; width:250px; padding: 15px; border-radius: 50px; font-weight: bold; cursor: pointer; border: none; transition: 0.3s;">
+                    🔄 КАЙРА БАШТОО
+                </button>
             </div>
         `;
     }
