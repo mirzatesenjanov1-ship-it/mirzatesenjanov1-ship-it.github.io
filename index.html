@@ -887,7 +887,7 @@
         ]
     ];
 
-  function renderGame() {
+ function renderGame() {
         let qIdx = 0;
         let gameFinished = false; 
         const questions = allQuestions[selectedLevelIdx] || [{q:"Суроолор жок", a:["..."], c:"..."}];
@@ -899,23 +899,27 @@
                 return;
             }
             const q = questions[qIdx];
-            document.getElementById('q-text').innerText = q.q;
-            const optArea = document.getElementById('options'); 
-            optArea.innerHTML = "";
-            q.a.forEach(txt => {
-                const b = document.createElement('button');
-                b.className = 'btn'; b.innerText = txt;
-                b.onclick = () => {
-                    if (txt === q.c) {
-                        sessionRef.child('pos/' + myRole).transaction(p => (p || 0) + (myRole === 'boy' ? 1.5 : 1.2));
-                        b.classList.add('correct-flash');
-                        setTimeout(() => { qIdx++; showQ(); }, 400);
-                    } else { 
-                        b.classList.add('wrong-flash'); 
-                    }
-                };
-                optArea.appendChild(b);
-            });
+            const qTextEl = document.getElementById('q-text');
+            const optArea = document.getElementById('options');
+            
+            if (qTextEl) qTextEl.innerText = q.q;
+            if (optArea) {
+                optArea.innerHTML = "";
+                q.a.forEach(txt => {
+                    const b = document.createElement('button');
+                    b.className = 'btn'; b.innerText = txt;
+                    b.onclick = () => {
+                        if (txt === q.c) {
+                            sessionRef.child('pos/' + myRole).transaction(p => (p || 0) + (myRole === 'boy' ? 1.5 : 1.2));
+                            b.classList.add('correct-flash');
+                            setTimeout(() => { qIdx++; showQ(); }, 400);
+                        } else { 
+                            b.classList.add('wrong-flash'); 
+                        }
+                    };
+                    optArea.appendChild(b);
+                });
+            }
         }
         
         showQ();
@@ -926,8 +930,11 @@
                 const boyPos = 5 + (p.boy || 0);
                 const girlPos = 45 + (p.girl || 0);
                 
-                document.getElementById('boy-container').style.left = boyPos + "%";
-                document.getElementById('girl-container').style.left = girlPos + "%";
+                const bCont = document.getElementById('boy-container');
+                const gCont = document.getElementById('girl-container');
+                
+                if (bCont) bCont.style.left = boyPos + "%";
+                if (gCont) gCont.style.left = girlPos + "%";
 
                 if (boyPos >= girlPos) { 
                     checkWinner("Жигит кууп жетти!"); 
@@ -942,7 +949,7 @@
             gameFinished = true;
 
             sessionRef.child('players').once('value', pSnap => {
-                const names = pSnap.val();
+                const names = pSnap.val() || {boy: "Жигит", girl: "Кыз"};
                 sessionRef.child('pos').once('value', posSnap => {
                     const finalPos = posSnap.val() || {boy: 0, girl: 0};
                     const isBoyAhead = (finalPos.boy + 5) >= (finalPos.girl + 45);
@@ -953,22 +960,24 @@
                     document.getElementById('v-girl').pause();
 
                     const screen = document.getElementById('leaderboard-screen');
-                    screen.style.display = "flex";
-                    screen.innerHTML = `
-                        <h1 style="color:#f1c40f; margin-bottom:5px;">🏆 ${winnerName} ЖЕҢДИ!</h1>
-                        <p style="color:#bdc3c7; margin-bottom:20px;">${reason}</p>
-                        <div style="background:rgba(255,255,255,0.1); padding:20px; border-radius:15px; width:280px; text-align:left;">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                                <span>🐎 ${names.boy}:</span> 
-                                <span>${Math.floor(finalPos.boy)} упай</span>
+                    if (screen) {
+                        screen.style.display = "flex";
+                        screen.innerHTML = `
+                            <h1 style="color:#f1c40f; margin-bottom:5px;">🏆 ${winnerName} ЖЕҢДИ!</h1>
+                            <p style="color:#bdc3c7; margin-bottom:20px;">${reason}</p>
+                            <div style="background:rgba(255,255,255,0.1); padding:20px; border-radius:15px; width:280px; text-align:left;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                                    <span>🐎 ${names.boy}:</span> 
+                                    <span>${Math.floor(finalPos.boy)} упай</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between;">
+                                    <span>💃 ${names.girl}:</span> 
+                                    <span>${Math.floor(finalPos.girl)} упай</span>
+                                </div>
                             </div>
-                            <div style="display:flex; justify-content:space-between;">
-                                <span>💃 ${names.girl}:</span> 
-                                <span>${Math.floor(finalPos.girl)} упай</span>
-                            </div>
-                        </div>
-                        <button class="secondary-btn" style="margin-top:20px;" onclick="location.reload()">Башкы меню</button>
-                    `;
+                            <button class="secondary-btn" style="margin-top:20px;" onclick="location.reload()">Башкы меню</button>
+                        `;
+                    }
                 });
             });
         }
