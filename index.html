@@ -1,18 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="ky">
 <head>
-    <title>Кыз Куумай</title>
-    </head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Кыз Куумай - Физика</title>
+    <link rel="stylesheet" href="style.css"> <style>
+        /* Мобилдик адаптация */
+        body { overflow: hidden; margin: 0; font-family: sans-serif; background: #000; }
+        .screen { position: fixed; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; background: url('bg.jpg') center/cover; }
+        .btn { width: 90%; max-width: 300px; padding: 15px; margin: 10px; border-radius: 12px; border: none; font-size: 18px; font-weight: bold; cursor: pointer; }
+        #ui-bottom { position: fixed; bottom: 0; width: 100%; background: rgba(0,0,0,0.8); display: none; flex-direction: column; padding: 10px; }
+        #q-text { color: white; text-align: center; font-size: 20px; margin-bottom: 10px; }
+        .horse-container { position: absolute; bottom: 20%; transition: left 0.5s linear; width: 80px; }
+        img { width: 100%; }
+    </style>
+</head>
 <body>
+
+    <div id="level-screen" class="screen" style="display: flex;">
+        <h2 style="color: white;">БӨЛҮМДҮ ТАНДАҢЫЗ</h2>
+        <button class="btn" style="background: #2ecc71;" onclick="selectLevel(0)">1. МЕХАНИКА</button>
+        <button class="btn" style="background: #2ecc71;" onclick="selectLevel(1)">2. МОЛЕКУЛАЛЫК ФИЗИКА</button>
+        </div>
+
+    <div id="setup-screen" class="screen">
+        <h2 id="display-level-name" style="color: white;"></h2>
+        <input type="text" id="player-name" placeholder="Атыңыз" class="btn">
+        <div id="room-controls">
+            <button class="btn" onclick="createRoom()">Бөлмө ачуу</button>
+            <input type="number" id="room-input" placeholder="Код жазыңыз" class="btn">
+            <button class="btn" onclick="joinRoom()">Кирүү</button>
+        </div>
+        <div id="wait-status" style="color: yellow;"></div>
+    </div>
+
+    <div id="sync-overlay" class="screen">
+        <h1 id="countdown" style="font-size: 80px; color: white;">ДАЯРБЫ?</h1>
+        <button class="btn" onclick="triggerReady()">МЕН ДАЯРМЫН!</button>
+    </div>
+
+    <div id="game-field" style="position: relative; width: 100%; height: 100vh;">
+        <div id="boy-container" class="horse-container" style="left: 5%;"><img src="boy.png"></div>
+        <div id="girl-container" class="horse-container" style="left: 45%;"><img src="girl.png"></div>
+    </div>
+
+    <div id="ui-bottom">
+        <div id="q-text"></div>
+        <div id="options" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+    </div>
+
+    <div id="leaderboard-screen" class="screen"></div>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
     <script>
-        // Firebase конфигурациясын гана калтырасыз
-        const firebaseConfig = { databaseURL: "СИЗДИН_URL" };
+        const firebaseConfig = { databaseURL: "https://kyz-kuumay-game-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(firebaseConfig);
     </script>
-
+    
     <script src="questions.js"></script>
     <script src="game-logic.js"></script>
 </body>
