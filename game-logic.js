@@ -5,15 +5,22 @@ const levelNames = ["МЕХАНИКА", "МОЛЕКУЛАЛЫК ФИЗИКА", "
 // --- МУЗЫКА ---
 function playMenuMusic() {
     const music = document.getElementById('menuMusic');
-    if (music && music.paused) music.play().catch(e => {});
+    if (music) {
+        music.currentTime = 0;
+        music.play().catch(e => console.log("Музыка ойноо катасы"));
+    }
 }
 function stopMenuMusic() {
     const music = document.getElementById('menuMusic');
-    if (music) { music.pause(); music.currentTime = 0; }
+    if (music) { music.pause(); }
 }
 function playGameMusic() {
     const gMusic = document.getElementById('gameMusic');
     if (gMusic) { gMusic.volume = 0.5; gMusic.play().catch(e => {}); }
+}
+function stopGameMusic() {
+    const gMusic = document.getElementById('gameMusic');
+    if (gMusic) { gMusic.pause(); gMusic.currentTime = 0; }
 }
 
 // --- ЭМОЦИЯЛАР ---
@@ -30,20 +37,13 @@ function listenReactions() {
     sessionRef.child('reactions').on('value', s => {
         const data = s.val();
         if (!data) return;
-
         const containerId = data.sender === "boy" ? "boy-container" : "girl-container";
         const container = document.getElementById(containerId);
         if (!container) return;
-
         const el = document.createElement('div');
         el.className = 'emoji-pop';
         el.innerText = data.emoji;
-        el.style.cssText = `
-            position: absolute; top: -60px; left: 50%;
-            transform: translateX(-50%); font-size: 50px;
-            animation: floatUp 1.5s forwards; z-index: 1000;
-        `;
-        
+        el.style.cssText = `position: absolute; top: -60px; left: 50%; transform: translateX(-50%); font-size: 50px; animation: floatUp 1.5s forwards; z-index: 1000;`;
         container.appendChild(el);
         setTimeout(() => el.remove(), 1500);
     });
@@ -120,10 +120,8 @@ function launch() {
     document.getElementById('sync-overlay').style.display = "none";
     document.getElementById('game-field').style.display = "block";
     document.getElementById('ui-bottom').style.display = "flex";
-    
     document.getElementById('boyVideo').play();
     document.getElementById('girlVideo').play();
-    
     renderGame();
 }
 
@@ -140,12 +138,9 @@ function renderGame() {
             const turn = s.val();
             const q = currentQuestions[qIdx];
             if (!q) return checkWinner("Суроолор бүттү!");
-
             const optArea = document.getElementById('options');
             const qText = document.getElementById('q-text');
-
             optArea.innerHTML = "";
-            
             if (turn === myRole) {
                 optArea.classList.remove('disabled-overlay');
                 qText.innerText = q.q;
@@ -154,7 +149,7 @@ function renderGame() {
                     b.className = 'btn opt-btn';
                     b.innerText = txt;
                     b.onclick = () => {
-                        let step = (txt === q.c) ? 3.5 : -1.5;
+                        let step = (txt === q.c) ? 4 : -2;
                         sessionRef.update({
                             ['pos/' + myRole]: firebase.database.ServerValue.increment(step),
                             turn: myRole === "boy" ? "girl" : "boy",
@@ -184,37 +179,39 @@ function renderGame() {
         document.getElementById('boy-container').style.left = bPos + "%";
         document.getElementById('girl-container').style.left = gPos + "%";
         
-        if (bPos >= (gPos - 2)) checkWinner("ЖИГИТ КЫЗГА ЖЕТТИ! 🏇");
-        else if (gPos >= 95) checkWinner("КЫЗ КАЧЫП КЕТТИ! 🐎");
+        if (bPos >= (gPos - 2)) checkWinner("Жигит кызга жетти! 🏇");
+        else if (gPos >= 90) checkWinner("Кыз качып кетти! 🐎");
     });
 
     function checkWinner(reason) {
         if (gameFinished) return;
         gameFinished = true;
         
+        // 1. Бардык процесстерди токтотуу
         sessionRef.child('pos').off();
         sessionRef.child('turn').off();
-        
-        document.getElementById('boyVideo').pause();
-        document.getElementById('girlVideo').pause();
+        stopGameMusic();
+        playMenuMusic(); // Кайра баштапкы музыка
+
+        // 2. Видеолорду жашыруу
+        document.getElementById('game-field').style.display = "none";
         document.getElementById('ui-bottom').style.display = "none";
 
+        // 3. Жаңы жыйынтык экраны
         const lb = document.getElementById('leaderboard-screen');
         lb.style.display = "flex";
-        lb.style.zIndex = "9999";
-        lb.style.background = "rgba(0, 0, 0, 0.85)";
+        lb.style.zIndex = "5000";
 
-        let winnerName = reason.includes("ЖЕТТИ") ? "ЖИГИТ" : "КЫЗ";
+        // Ким утканына жараша сүрөт тандоо
+        let winnerImg = reason.includes("Жигит") ? "boy_run.png" : "girl_run.png";
+        if (reason.includes("жетти")) winnerImg = "boy_run.png"; // Жигит жетти
+        else winnerImg = "girl_run.png"; // Кыз качты
 
         lb.innerHTML = `
-            <div style="background: white; padding: 30px; border-radius: 20px; text-align: center; border: 5px solid #f1c40f; width: 80%; max-width: 400px; box-shadow: 0 0 20px #f1c40f;">
-                <h1 style="color: #e67e22; margin: 0;">🏆 ЖЫЙЫНТЫК</h1>
-                <p style="font-size: 18px; margin: 15px 0; color: #333;">${reason}</p>
-                <hr>
-                <div style="margin: 20px 0; font-weight: bold;">
-                    <div style="font-size: 24px; color: #27ae60;">🥇 Жеңүүчү: ${winnerName}</div>
-                </div>
-                <button class="btn" onclick="location.reload()" style="background: #3498db; color: white; width: 100%; padding: 12px; font-size: 18px; cursor: pointer; border-radius: 10px; border: none;">МЕНЮГА КАЙТУУ</button>
+            <div style="background: rgba(0,0,0,0.9); width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white;">
+                <img src="${winnerImg}" style="width:250px; height:250px; border-radius:50%; border: 5px solid #f1c40f; margin-bottom:20px; object-fit:cover;">
+                <h1 style="font-size: 32px; color: #f1c40f; text-align:center; padding: 0 20px;">${reason}</h1>
+                <button class="btn" onclick="location.reload()" style="background:#f1c40f; color:black; margin-top:30px; font-size:20px; width:200px;">КАЙРА БАШТОО</button>
             </div>
         `;
     }
