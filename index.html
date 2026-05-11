@@ -887,101 +887,7 @@
         ]
     ];
 
- function initAudio() {
-        const menu = document.getElementById('menuMusic');
-        if (menu.paused && !gameActive) {
-            menu.play().catch(e => console.log("Audio play blocked"));
-        }
-    }
-
-    function selectLevel(idx) {
-        selectedLevelIdx = idx;
-        document.getElementById('level-screen').style.display = "none";
-        document.getElementById('setup-screen').style.display = "flex";
-        document.getElementById('display-level-name').innerText = levelNames[idx];
-    }
-
-    function createRoom() {
-        myName = document.getElementById('player-name').value;
-        if (!myName) return alert("Атыңызды жазыңыз!");
-        myRole = "boy";
-        const code = Math.floor(100 + Math.random() * 899);
-        document.getElementById('room-controls').style.display = "none";
-        document.getElementById('wait-status').innerHTML = `Код: ${code}<br>Күтүңүз...`;
-        sessionRef = db.ref('rooms/' + code);
-        sessionRef.set({ players: { boy: myName }, sync: { boy: false, girl: false }, pos: { boy: 0, girl: 0 }, level: selectedLevelIdx });
-        sessionRef.child('players/girl').on('value', s => { if(s.exists()) startSync(); });
-    }
-
-    function joinRoom() {
-        myName = document.getElementById('player-name').value;
-        const code = document.getElementById('room-input').value;
-        if (!myName || !code) return alert("Маалыматты толтуруңуз!");
-        myRole = "girl";
-        sessionRef = db.ref('rooms/' + code);
-        sessionRef.once('value', s => {
-            if (s.exists() && !s.val().players.girl) {
-                selectedLevelIdx = s.val().level;
-                sessionRef.child('players/girl').set(myName);
-                startSync();
-            } else { alert("Ката же бөлмө толо!"); }
-        });
-    }
-
-    function sendEmoji(emoji) {
-        if (sessionRef) {
-            sessionRef.child('emojis').set({ msg: emoji, sender: myRole, time: Date.now() });
-        }
-    }
-
-    function startSync() {
-        document.getElementById('setup-screen').style.display = "none";
-        document.getElementById('sync-overlay').style.display = "flex";
-        sessionRef.child('sync').on('value', s => {
-            const sync = s.val();
-            if (sync && sync.boy && sync.girl && !gameActive) startCountdown();
-        });
-        sessionRef.child('emojis').on('value', (s) => {
-            const data = s.val();
-            if (data) displayEmoji(data.sender, data.msg);
-        });
-    }
-
-    function displayEmoji(sender, msg) {
-        const container = document.getElementById(sender === "boy" ? "boy-container" : "girl-container");
-        const emojiEl = document.createElement('div');
-        emojiEl.className = 'emoji-msg';
-        emojiEl.innerText = msg;
-        container.appendChild(emojiEl);
-        setTimeout(() => emojiEl.remove(), 2000);
-    }
-
-    function triggerReady() { 
-        sessionRef.child('sync/' + myRole).set(true); 
-        document.getElementById('master-start').style.display = "none"; 
-    }
-
-    function startCountdown() {
-        gameActive = true;
-        let c = 3;
-        const timer = setInterval(() => {
-            document.getElementById('countdown').innerText = c > 0 ? c : "GO!";
-            if (c === 0) { clearInterval(timer); setTimeout(launch, 500); }
-            c--;
-        }, 1000);
-    }
-
-    function launch() {
-        document.getElementById('menuMusic').pause();
-        document.getElementById('sync-overlay').style.display = "none";
-        document.getElementById('ui-top').style.display = "block";
-        document.getElementById('ui-bottom').style.display = "flex";
-        const v1 = document.getElementById('v-boy'), v2 = document.getElementById('v-girl'), bgm = document.getElementById('bgMusic');
-        Promise.all([v1.play(), v2.play(), bgm.play()]).catch(e => console.log("Interaction needed"));
-        renderGame();
-    }
-
-    function renderGame() {
+ function renderGame() {
         let qIdx = 0;
         let gameFinished = false; 
         const questions = allQuestions[selectedLevelIdx] || [{q:"Суроолор жок", a:["..."], c:"..."}];
@@ -1000,11 +906,16 @@
                 b.className = 'btn'; b.innerText = txt;
                 b.onclick = () => {
                     if (txt === q.c) {
-                        // Эгер 100 суроо болсо, кадамды (0.4) кылсаңыз болот, ошондо аттар акырын жылат
-                        sessionRef.child('pos/' + myRole).transaction(p => (p || 0) + (myRole === 'boy' ? 0.8 : 0.6));
+                        // Эки оюнчу тең туура жооп бергенде маарага (оңго) жакындайт
+                        // Жигит тезирээк (0.9), кыз бир аз жайыраак (0.7) жылат, бул кууп жетүү эффектиси үчүн
+                        let moveStep = (myRole === 'boy' ? 0.9 : 0.7);
+                        sessionRef.child('pos/' + myRole).transaction(p => (p || 0) + moveStep);
+                        
                         b.classList.add('correct-flash');
                         setTimeout(() => { qIdx++; showQ(); }, 400);
-                    } else { b.classList.add('wrong-flash'); }
+                    } else { 
+                        b.classList.add('wrong-flash'); 
+                    }
                 };
                 optArea.appendChild(b);
             });
@@ -1012,29 +923,69 @@
         
         showQ();
 
+        // Позицияларды синхрондоштуруу
         sessionRef.child('pos').on('value', s => {
             const p = s.val();
             if (p && !gameFinished) {
-                const boyPos = 5 + (p.boy || 0), girlPos = 45 + (p.girl || 0);
-                document.getElementById('boy-container').style.left = boyPos + "%";
-                document.getElementById('girl-container').style.left = girlPos + "%";
-                if (boyPos >= girlPos) checkWinner("Жигит кууп жетти!"); 
-                else if (girlPos >= 90) checkWinner("Кыз качып кетти!"); 
+                // Баштапкы позициялар + Firebase'деги упайлар
+                const boyPos = 5 + (p.boy || 0);
+                const girlPos = 45 + (p.girl || 0);
+                
+                const bCont = document.getElementById('boy-container');
+                const gCont = document.getElementById('girl-container');
+                
+                if (bCont) bCont.style.left = boyPos + "%";
+                if (gCont) gCont.style.left = girlPos + "%";
+
+                // ЖЕҢИШ ШАРТТАРЫ:
+                // 1. Жигит кызды кууп жетсе (позициялары бирдей болуп калса)
+                if (boyPos >= girlPos) { 
+                    checkWinner("Жигит кууп жетти!"); 
+                } 
+                // 2. Кыз финишке жетсе (экрандын оң четине - 85%)
+                else if (girlPos >= 85) { 
+                    checkWinner("Кыз маарага жетти (качып кетти)!"); 
+                }
             }
         });
 
         function checkWinner(reason) {
             if (gameFinished) return;
             gameFinished = true;
+
             sessionRef.child('players').once('value', pSnap => {
                 const names = pSnap.val() || {boy: "Жигит", girl: "Кыз"};
                 sessionRef.child('pos').once('value', posSnap => {
                     const finalPos = posSnap.val() || {boy: 0, girl: 0};
-                    const winnerName = (finalPos.boy + 5 >= finalPos.girl + 45) ? names.boy : names.girl;
+                    
+                    // Кимдин позициясы маарага жакыныраак болсо, ошону жеңүүчү деп чыгаруу
+                    const isBoyWinner = (finalPos.boy + 5) >= (finalPos.girl + 45);
+                    const winnerName = isBoyWinner ? names.boy : names.girl;
+
                     document.getElementById('bgMusic').pause();
+                    const v1 = document.getElementById('v-boy');
+                    const v2 = document.getElementById('v-girl');
+                    if(v1) v1.pause(); if(v2) v2.pause();
+
                     const screen = document.getElementById('leaderboard-screen');
-                    screen.style.display = "flex";
-                    screen.innerHTML = `<h1>🏆 ${winnerName} ЖЕҢДИ!</h1><p>${reason}</p><button class="secondary-btn" onclick="location.reload()">Меню</button>`;
+                    if (screen) {
+                        screen.style.display = "flex";
+                        screen.innerHTML = `
+                            <h1 style="color:#f1c40f;">🏆 ${winnerName} ЖЕҢДИ!</h1>
+                            <p style="color:#bdc3c7;">${reason}</p>
+                            <div style="background:rgba(255,255,255,0.1); padding:20px; border-radius:15px; width:280px; text-align:left; margin: 15px 0;">
+                                <div style="display:flex; justify-content:space-between;">
+                                    <span>🐎 ${names.boy}:</span> 
+                                    <span>${Math.floor(finalPos.boy)} упай</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                                    <span>💃 ${names.girl}:</span> 
+                                    <span>${Math.floor(finalPos.girl)} упай</span>
+                                </div>
+                            </div>
+                            <button class="secondary-btn" onclick="location.reload()">Башкы меню</button>
+                        `;
+                    }
                 });
             });
         }
