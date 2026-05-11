@@ -6,7 +6,6 @@ const levelNames = ["МЕХАНИКА", "МОЛЕКУЛАЛЫК ФИЗИКА", "
 function playMenuMusic() {
     const music = document.getElementById('menuMusic');
     if (music && music.paused) {
-        // Браузерлердин коопсуздук эрежесине ылайык play() убада (promise) кайтарат
         music.play().catch(e => console.log("Музыканы иштетүү үчүн колдонуучунун аракети керек"));
     }
 }
@@ -15,17 +14,19 @@ function stopMenuMusic() {
     const music = document.getElementById('menuMusic');
     if (music) {
         music.pause();
-        music.currentTime = 0; // Кайра башынан башталышы үчүн
+        music.currentTime = 0;
     }
+}
+
+function playGameMusic() {
+    const gMusic = document.getElementById('gameMusic');
+    if (gMusic) gMusic.play().catch(e => console.log("Оюн музыкасы иштебей калды"));
 }
 
 // --- МЕНЮ ЛОГИКАСЫ ---
 function selectLevel(idx) {
     selectedLevelIdx = idx;
-    
-    // Бөлүм тандалганда (биринчи клик болгондо) музыканы иштетебиз
     playMenuMusic();
-
     document.getElementById('level-screen').style.display = "none";
     document.getElementById('setup-screen').style.display = "flex";
     document.getElementById('display-level-name').innerText = levelNames[idx];
@@ -35,9 +36,7 @@ function createRoom() {
     myName = document.getElementById('player-name').value.trim();
     if (!myName) return alert("Атыңызды жазыңыз!");
     
-    // Музыканы дагы бир жолу текшерүү (кепилдик үчүн)
     playMenuMusic();
-
     myRole = "boy";
     const code = Math.floor(100 + Math.random() * 899);
     
@@ -50,7 +49,8 @@ function createRoom() {
         sync: { boy: false, girl: false }, 
         pos: { boy: 0, girl: 0 }, 
         level: selectedLevelIdx,
-        status: "waiting" 
+        status: "waiting",
+        turn: "boy" // Оюнду жигит баштайт
     });
 
     sessionRef.child('players/girl').on('value', s => { 
@@ -71,8 +71,6 @@ function joinRoom() {
         if (s.exists() && data.players && !data.players.girl) {
             selectedLevelIdx = data.level;
             sessionRef.child('players/girl').set(myName);
-            
-            // Кошулганда музыканы иштетүү
             playMenuMusic();
             startSync();
         } else { 
@@ -116,14 +114,17 @@ function startCountdown() {
 
 // --- ОЮНДУ БАШТОО (LAUNCH) ---
 function launch() {
-    // ОЮН ТАЛААСЫНА ӨТКӨНДӨ МЕНЮ МУЗЫКАСЫН ТОКТОТУУ
     stopMenuMusic();
+    playGameMusic();
+
+    // Видеолорду иштетүү
+    document.getElementById('boyVideo').play();
+    document.getElementById('girlVideo').play();
 
     document.getElementById('sync-overlay').style.display = "none";
     const gameField = document.getElementById('game-field');
     const bottomUI = document.getElementById('ui-bottom');
     
-    // HTML'деги ID'лерге жараша көрсөтүү
     if(gameField) gameField.style.display = "block";
     if(bottomUI) bottomUI.style.display = "flex";
     
@@ -140,40 +141,61 @@ function renderGame() {
     function showQ() {
         if (gameFinished || qIdx >= shuffledQuestions.length) return;
         
-        const q = shuffledQuestions[qIdx];
-        document.getElementById('q-text').innerText = q.q;
-        const optArea = document.getElementById('options');
-        optArea.innerHTML = "";
-        
-        q.a.forEach(txt => {
-            const b = document.createElement('button');
-            b.className = 'btn opt-btn'; 
-            b.innerText = txt;
-            b.onclick = () => {
-                let moveStep = 0;
-                if (txt === q.c) {
-                    moveStep = 1.5;
-                    b.style.background = "#2ecc71";
-                } else {
-                    moveStep = -1.0;
-                    b.style.background = "#e74c3c";
-                }
-                
-                sessionRef.child('pos/' + myRole).transaction(p => {
-                    let newPos = (p || 0) + moveStep;
-                    return newPos < 0 ? 0 : newPos;
-                });
-                
-                setTimeout(() => { 
-                    qIdx++; 
-                    if(qIdx < shuffledQuestions.length) showQ(); 
-                    else checkWinner("Суроолор бүттү!");
-                }, 600);
-            };
-            optArea.appendChild(b);
+        sessionRef.child('turn').once('value', s => {
+            const currentTurn = s.val();
+            const q = shuffledQuestions[qIdx];
+            const optArea = document.getElementById('options');
+            const qText = document.getElementById('q-text');
+
+            if (currentTurn === myRole) {
+                optArea.classList.remove('disabled-overlay');
+                qText.innerText = q.q;
+            } else {
+                optArea.classList.add('disabled-overlay');
+                qText.innerText = "АТААНДАШТЫ КҮТҮҮ...";
+            }
+
+            optArea.innerHTML = "";
+            q.a.forEach(txt => {
+                const b = document.createElement('button');
+                b.className = 'btn opt-btn'; 
+                b.innerText = txt;
+                b.onclick = () => {
+                    if (currentTurn !== myRole) return;
+
+                    let moveStep = 0;
+                    let isCorrect = (txt === q.c);
+                    
+                    if (isCorrect) {
+                        moveStep = 1.5;
+                        document.getElementById('game-body').classList.add('flash-green');
+                    } else {
+                        moveStep = -1.0;
+                        document.getElementById('game-body').classList.add('flash-red');
+                    }
+                    
+                    setTimeout(() => {
+                        document.getElementById('game-body').classList.remove('flash-green', 'flash-red');
+                    }, 600);
+
+                    // Позицияны жана кезекти алмаштыруу
+                    const nextTurn = myRole === "boy" ? "girl" : "boy";
+                    sessionRef.update({
+                        ['pos/' + myRole]: firebase.database.ServerValue.increment(moveStep),
+                        turn: nextTurn
+                    });
+
+                    qIdx++;
+                };
+                optArea.appendChild(b);
+            });
         });
     }
-    showQ();
+
+    // Кезек алмашканда суроону жаңылоо
+    sessionRef.child('turn').on('value', () => {
+        showQ();
+    });
 
     sessionRef.child('pos').on('value', s => {
         const p = s.val();
@@ -193,6 +215,7 @@ function renderGame() {
         if (gameFinished) return;
         gameFinished = true;
         sessionRef.child('pos').off();
+        sessionRef.child('turn').off();
         
         const lb = document.getElementById('leaderboard-screen');
         lb.style.display = "flex";
