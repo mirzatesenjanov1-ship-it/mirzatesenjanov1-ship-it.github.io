@@ -26,6 +26,44 @@ function playGameMusic() {
     }
 }
 
+// --- ЭМОЦИЯЛАР СИСТЕМАСЫ ---
+function sendEmoji(emoji) {
+    if (!sessionRef) return;
+    sessionRef.child('reactions').set({
+        sender: myRole,
+        emoji: emoji,
+        time: Date.now()
+    });
+}
+
+function listenReactions() {
+    sessionRef.child('reactions').on('value', s => {
+        const data = s.val();
+        if (!data) return;
+
+        const containerId = data.sender === "boy" ? "boy-container" : "girl-container";
+        const container = document.getElementById(containerId);
+        
+        const oldEmoji = container.querySelector('.emoji-pop');
+        if (oldEmoji) oldEmoji.remove();
+
+        const el = document.createElement('div');
+        el.className = 'emoji-pop';
+        el.innerText = data.emoji;
+        el.style.position = 'absolute';
+        el.style.top = '-50px';
+        el.style.left = '50%';
+        el.style.transform = 'translateX(-50%)';
+        el.style.fontSize = '40px';
+        el.style.animation = 'floatUp 1.5s forwards';
+        el.style.pointerEvents = 'none';
+        el.style.zIndex = '1000';
+        
+        container.appendChild(el);
+        setTimeout(() => el.remove(), 1500);
+    });
+}
+
 // --- МЕНЮ ЛОГИКАСЫ ---
 function selectLevel(idx) {
     selectedLevelIdx = idx;
@@ -119,6 +157,7 @@ function startCountdown() {
 function launch() {
     stopMenuMusic();
     playGameMusic();
+    listenReactions(); // Эмоцияларды тыңшоо
 
     // Видеолорду иштетүү жана кайталоо (loop)
     const bVideo = document.getElementById('boyVideo');
@@ -165,6 +204,24 @@ function renderGame() {
             }
 
             optArea.innerHTML = "";
+
+            // Эмоция баскычтарын суроонун үстүнө кошуу
+            const emojiBar = document.createElement('div');
+            emojiBar.style.gridColumn = "1 / span 2";
+            emojiBar.style.display = "flex";
+            emojiBar.style.justifyContent = "center";
+            emojiBar.style.gap = "15px";
+            emojiBar.style.marginBottom = "10px";
+            ["😂", "🚀", "😎", "😜", "🔥"].forEach(e => {
+                const eb = document.createElement('span');
+                eb.innerText = e;
+                eb.style.fontSize = "24px";
+                eb.style.cursor = "pointer";
+                eb.onclick = (ev) => { ev.stopPropagation(); sendEmoji(e); };
+                emojiBar.appendChild(eb);
+            });
+            optArea.appendChild(emojiBar);
+
             q.a.forEach(txt => {
                 const b = document.createElement('button');
                 b.className = 'btn opt-btn'; 
@@ -227,6 +284,7 @@ function renderGame() {
         gameFinished = true;
         sessionRef.child('pos').off();
         sessionRef.child('turn').off();
+        sessionRef.child('reactions').off();
         
         // Видеолорду токтотуу
         document.getElementById('boyVideo').pause();
