@@ -2,11 +2,12 @@ let myRole = "", myName = "", sessionRef = null, gameActive = false;
 let selectedLevelIdx = null;
 const levelNames = ["МЕХАНИКА", "МОЛЕКУЛАЛЫК ФИЗИКА", "ЭЛЕКТРОДИНАМИКА", "ТЕРМЕЛҮҮЛӨР", "ОПТИКА", "АТОМДУК ФИЗИКА", "АСТРОНОМИЯ"];
 
-// Меню музыкасын башкаруу үчүн жардамчы функциялар
+// --- МУЗЫКАНЫ БАШКАРУУ ---
 function playMenuMusic() {
     const music = document.getElementById('menuMusic');
     if (music && music.paused) {
-        music.play().catch(e => console.log("Музыканы иштетүү үчүн экранды басуу керек"));
+        // Браузерлердин коопсуздук эрежесине ылайык play() убада (promise) кайтарат
+        music.play().catch(e => console.log("Музыканы иштетүү үчүн колдонуучунун аракети керек"));
     }
 }
 
@@ -14,14 +15,15 @@ function stopMenuMusic() {
     const music = document.getElementById('menuMusic');
     if (music) {
         music.pause();
-        music.currentTime = 0;
+        music.currentTime = 0; // Кайра башынан башталышы үчүн
     }
 }
 
+// --- МЕНЮ ЛОГИКАСЫ ---
 function selectLevel(idx) {
     selectedLevelIdx = idx;
     
-    // Бөлүм тандалганда музыканы иштетүү
+    // Бөлүм тандалганда (биринчи клик болгондо) музыканы иштетебиз
     playMenuMusic();
 
     document.getElementById('level-screen').style.display = "none";
@@ -32,6 +34,10 @@ function selectLevel(idx) {
 function createRoom() {
     myName = document.getElementById('player-name').value.trim();
     if (!myName) return alert("Атыңызды жазыңыз!");
+    
+    // Музыканы дагы бир жолу текшерүү (кепилдик үчүн)
+    playMenuMusic();
+
     myRole = "boy";
     const code = Math.floor(100 + Math.random() * 899);
     
@@ -66,7 +72,7 @@ function joinRoom() {
             selectedLevelIdx = data.level;
             sessionRef.child('players/girl').set(myName);
             
-            // Кошулганда музыканы иштетүү (эгер ойноп элек болсо)
+            // Кошулганда музыканы иштетүү
             playMenuMusic();
             startSync();
         } else { 
@@ -108,20 +114,23 @@ function startCountdown() {
     }, 1000);
 }
 
+// --- ОЮНДУ БАШТОО (LAUNCH) ---
 function launch() {
-    // Оюн талаасына өткөндө меню музыкасын токтотуу
+    // ОЮН ТАЛААСЫНА ӨТКӨНДӨ МЕНЮ МУЗЫКАСЫН ТОКТОТУУ
     stopMenuMusic();
 
     document.getElementById('sync-overlay').style.display = "none";
     const gameField = document.getElementById('game-field');
     const bottomUI = document.getElementById('ui-bottom');
     
+    // HTML'деги ID'лерге жараша көрсөтүү
     if(gameField) gameField.style.display = "block";
     if(bottomUI) bottomUI.style.display = "flex";
     
     renderGame();
 }
 
+// --- НЕГИЗГИ ОЮН ПРОЦЕССИ ---
 function renderGame() {
     let qIdx = 0;
     let gameFinished = false;
