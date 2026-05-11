@@ -20,7 +20,10 @@ function stopMenuMusic() {
 
 function playGameMusic() {
     const gMusic = document.getElementById('gameMusic');
-    if (gMusic) gMusic.play().catch(e => console.log("Оюн музыкасы иштебей калды"));
+    if (gMusic) {
+        gMusic.volume = 0.7; // Оюн музыкасынын катуулугу
+        gMusic.play().catch(e => console.log("Оюн музыкасы иштебей калды"));
+    }
 }
 
 // --- МЕНЮ ЛОГИКАСЫ ---
@@ -117,9 +120,15 @@ function launch() {
     stopMenuMusic();
     playGameMusic();
 
-    // Видеолорду иштетүү
-    document.getElementById('boyVideo').play();
-    document.getElementById('girlVideo').play();
+    // Видеолорду иштетүү жана кайталоо (loop)
+    const bVideo = document.getElementById('boyVideo');
+    const gVideo = document.getElementById('girlVideo');
+    if (bVideo && gVideo) {
+        bVideo.play();
+        gVideo.play();
+        bVideo.loop = true;
+        gVideo.loop = true;
+    }
 
     document.getElementById('sync-overlay').style.display = "none";
     const gameField = document.getElementById('game-field');
@@ -168,15 +177,17 @@ function renderGame() {
                     
                     if (isCorrect) {
                         moveStep = 1.5;
-                        document.getElementById('game-body').classList.add('flash-green');
+                        // Аппак фонду жашыл кылып жаркылдатуу
+                        document.getElementById('game-field').style.backgroundColor = "#d4edda";
                     } else {
                         moveStep = -1.0;
-                        document.getElementById('game-body').classList.add('flash-red');
+                        // Аппак фонду кызыл кылып жаркылдатуу
+                        document.getElementById('game-field').style.backgroundColor = "#f8d7da";
                     }
                     
                     setTimeout(() => {
-                        document.getElementById('game-body').classList.remove('flash-green', 'flash-red');
-                    }, 600);
+                        document.getElementById('game-field').style.backgroundColor = "#ffffff";
+                    }, 400);
 
                     // Позицияны жана кезекти алмаштыруу
                     const nextTurn = myRole === "boy" ? "girl" : "boy";
@@ -216,6 +227,10 @@ function renderGame() {
         gameFinished = true;
         sessionRef.child('pos').off();
         sessionRef.child('turn').off();
+        
+        // Видеолорду токтотуу
+        document.getElementById('boyVideo').pause();
+        document.getElementById('girlVideo').pause();
         
         const lb = document.getElementById('leaderboard-screen');
         lb.style.display = "flex";
