@@ -2,8 +2,28 @@ let myRole = "", myName = "", sessionRef = null, gameActive = false;
 let selectedLevelIdx = null;
 const levelNames = ["МЕХАНИКА", "МОЛЕКУЛАЛЫК ФИЗИКА", "ЭЛЕКТРОДИНАМИКА", "ТЕРМЕЛҮҮЛӨР", "ОПТИКА", "АТОМДУК ФИЗИКА", "АСТРОНОМИЯ"];
 
+// Меню музыкасын башкаруу үчүн жардамчы функциялар
+function playMenuMusic() {
+    const music = document.getElementById('menuMusic');
+    if (music && music.paused) {
+        music.play().catch(e => console.log("Музыканы иштетүү үчүн экранды басуу керек"));
+    }
+}
+
+function stopMenuMusic() {
+    const music = document.getElementById('menuMusic');
+    if (music) {
+        music.pause();
+        music.currentTime = 0;
+    }
+}
+
 function selectLevel(idx) {
     selectedLevelIdx = idx;
+    
+    // Бөлүм тандалганда музыканы иштетүү
+    playMenuMusic();
+
     document.getElementById('level-screen').style.display = "none";
     document.getElementById('setup-screen').style.display = "flex";
     document.getElementById('display-level-name').innerText = levelNames[idx];
@@ -27,7 +47,6 @@ function createRoom() {
         status: "waiting" 
     });
 
-    // Кыз кошулганда синхрондоштурууга өтүү
     sessionRef.child('players/girl').on('value', s => { 
         if(s.exists()) startSync(); 
     });
@@ -46,6 +65,9 @@ function joinRoom() {
         if (s.exists() && data.players && !data.players.girl) {
             selectedLevelIdx = data.level;
             sessionRef.child('players/girl').set(myName);
+            
+            // Кошулганда музыканы иштетүү (эгер ойноп элек болсо)
+            playMenuMusic();
             startSync();
         } else { 
             alert("Бөлмө табылган жок же бөлмө толуп калган!"); 
@@ -57,7 +79,6 @@ function startSync() {
     document.getElementById('setup-screen').style.display = "none";
     document.getElementById('sync-overlay').style.display = "flex";
     
-    // Эки оюнчу тең "Даярмын" баскычын басканын көзөмөлдөө
     sessionRef.child('sync').on('value', s => {
         const sync = s.val();
         if (sync && sync.boy && sync.girl && !gameActive) {
@@ -88,11 +109,14 @@ function startCountdown() {
 }
 
 function launch() {
+    // Оюн талаасына өткөндө меню музыкасын токтотуу
+    stopMenuMusic();
+
     document.getElementById('sync-overlay').style.display = "none";
-    // Эгер index.html'де бул ID'лер болсо, аларды көрсөтүү
-    const topUI = document.getElementById('ui-top');
+    const gameField = document.getElementById('game-field');
     const bottomUI = document.getElementById('ui-bottom');
-    if(topUI) topUI.style.display = "block";
+    
+    if(gameField) gameField.style.display = "block";
     if(bottomUI) bottomUI.style.display = "flex";
     
     renderGame();
@@ -102,8 +126,6 @@ function renderGame() {
     let qIdx = 0;
     let gameFinished = false;
     const questions = allQuestions[selectedLevelIdx] || [];
-
-    // Суроолорду туш келди аралаштыруу (опция)
     const shuffledQuestions = questions.sort(() => Math.random() - 0.5);
 
     function showQ() {
@@ -114,7 +136,6 @@ function renderGame() {
         const optArea = document.getElementById('options');
         optArea.innerHTML = "";
         
-        // Жоопторду да аралаштырып чыгаруу
         q.a.forEach(txt => {
             const b = document.createElement('button');
             b.className = 'btn opt-btn'; 
@@ -122,28 +143,22 @@ function renderGame() {
             b.onclick = () => {
                 let moveStep = 0;
                 if (txt === q.c) {
-                    moveStep = 1.5; // Туура жооп: алдыга (бир аз көбөйтүлдү)
+                    moveStep = 1.5;
                     b.style.background = "#2ecc71";
                 } else {
-                    moveStep = -1.0; // Ката жооп: артка
+                    moveStep = -1.0;
                     b.style.background = "#e74c3c";
                 }
                 
-                // Позицияны жаңыртуу
                 sessionRef.child('pos/' + myRole).transaction(p => {
                     let newPos = (p || 0) + moveStep;
-                    if (newPos < 0) newPos = 0; // Артка кеткенде нөлдөн ашпайт
-                    return newPos;
+                    return newPos < 0 ? 0 : newPos;
                 });
                 
-                // Кийинки суроого өтүү
                 setTimeout(() => { 
                     qIdx++; 
-                    if(qIdx < shuffledQuestions.length) {
-                        showQ(); 
-                    } else {
-                        checkWinner("Суроолор бүттү!");
-                    }
+                    if(qIdx < shuffledQuestions.length) showQ(); 
+                    else checkWinner("Суроолор бүттү!");
                 }, 600);
             };
             optArea.appendChild(b);
@@ -151,31 +166,23 @@ function renderGame() {
     }
     showQ();
 
-    // Аттардын кыймылын көзөмөлдөө (Firebase аркылуу реалдуу убакытта)
     sessionRef.child('pos').on('value', s => {
         const p = s.val();
         if (p && !gameFinished) {
-            // Кыймылдын чектери (экранга жараша)
             const boyPos = 5 + (p.boy || 0);
             const girlPos = 40 + (p.girl || 0);
             
             document.getElementById('boy-container').style.left = boyPos + "%";
             document.getElementById('girl-container').style.left = girlPos + "%";
             
-            // ЖЕҢИШ ШАРТТАРЫ
-            if (boyPos >= girlPos) {
-                checkWinner("ЖИГИТ КУУП ЖЕТТИ! 🏇");
-            } else if (girlPos >= 90) {
-                checkWinner("КЫЗ МААРАГА ЖЕТТИ! 🏁");
-            }
+            if (boyPos >= girlPos) checkWinner("ЖИГИТ КУУП ЖЕТТИ! 🏇");
+            else if (girlPos >= 90) checkWinner("КЫЗ МААРАГА ЖЕТТИ! 🏁");
         }
     });
 
     function checkWinner(reason) {
         if (gameFinished) return;
         gameFinished = true;
-        
-        // Firebase байланышын үзүү
         sessionRef.child('pos').off();
         
         const lb = document.getElementById('leaderboard-screen');
@@ -187,8 +194,6 @@ function renderGame() {
                 <button class="btn" style="background: #3498db; color: white;" onclick="location.reload()">МЕНЮГА КАЙТУУ</button>
             </div>
         `;
-        
-        // Оюн бүткөндөн кийин 10 мүнөттөн соң маалыматтарды өчүрүү (автоматтык тазалоо)
         setTimeout(() => { sessionRef.remove(); }, 600000);
     }
 }
