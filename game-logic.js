@@ -21,7 +21,7 @@ function stopMenuMusic() {
 function playGameMusic() {
     const gMusic = document.getElementById('gameMusic');
     if (gMusic) {
-        gMusic.volume = 0.7; // Оюн музыкасынын катуулугу
+        gMusic.volume = 0.7;
         gMusic.play().catch(e => console.log("Оюн музыкасы иштебей калды"));
     }
 }
@@ -40,13 +40,10 @@ function listenReactions() {
     sessionRef.child('reactions').on('value', s => {
         const data = s.val();
         if (!data) return;
-
         const containerId = data.sender === "boy" ? "boy-container" : "girl-container";
         const container = document.getElementById(containerId);
-        
         const oldEmoji = container.querySelector('.emoji-pop');
         if (oldEmoji) oldEmoji.remove();
-
         const el = document.createElement('div');
         el.className = 'emoji-pop';
         el.innerText = data.emoji;
@@ -56,9 +53,6 @@ function listenReactions() {
         el.style.transform = 'translateX(-50%)';
         el.style.fontSize = '40px';
         el.style.animation = 'floatUp 1.5s forwards';
-        el.style.pointerEvents = 'none';
-        el.style.zIndex = '1000';
-        
         container.appendChild(el);
         setTimeout(() => el.remove(), 1500);
     });
@@ -76,14 +70,11 @@ function selectLevel(idx) {
 function createRoom() {
     myName = document.getElementById('player-name').value.trim();
     if (!myName) return alert("Атыңызды жазыңыз!");
-    
     playMenuMusic();
     myRole = "boy";
     const code = Math.floor(100 + Math.random() * 899);
-    
     document.getElementById('room-controls').style.display = "none";
     document.getElementById('wait-status').innerHTML = `БӨЛМӨ КОДУ: <b>${code}</b><br>Кыздын кошулуусун күтүңүз...`;
-    
     sessionRef = firebase.database().ref('rooms/' + code);
     sessionRef.set({ 
         players: { boy: myName }, 
@@ -91,22 +82,17 @@ function createRoom() {
         pos: { boy: 0, girl: 0 }, 
         level: selectedLevelIdx,
         status: "waiting",
-        turn: "boy" // Оюнду жигит баштайт
+        turn: "boy" 
     });
-
-    sessionRef.child('players/girl').on('value', s => { 
-        if(s.exists()) startSync(); 
-    });
+    sessionRef.child('players/girl').on('value', s => { if(s.exists()) startSync(); });
 }
 
 function joinRoom() {
     myName = document.getElementById('player-name').value.trim();
     const code = document.getElementById('room-input').value.trim();
     if (!myName || !code) return alert("Атыңызды жана кодду жазыңыз!");
-    
     myRole = "girl";
     sessionRef = firebase.database().ref('rooms/' + code);
-    
     sessionRef.once('value', s => {
         const data = s.val();
         if (s.exists() && data.players && !data.players.girl) {
@@ -114,26 +100,20 @@ function joinRoom() {
             sessionRef.child('players/girl').set(myName);
             playMenuMusic();
             startSync();
-        } else { 
-            alert("Бөлмө табылган жок же бөлмө толуп калган!"); 
-        }
+        } else { alert("Бөлмө табылган жок!"); }
     });
 }
 
 function startSync() {
     document.getElementById('setup-screen').style.display = "none";
     document.getElementById('sync-overlay').style.display = "flex";
-    
     sessionRef.child('sync').on('value', s => {
         const sync = s.val();
-        if (sync && sync.boy && sync.girl && !gameActive) {
-            startCountdown();
-        }
+        if (sync && sync.boy && sync.girl && !gameActive) startCountdown();
     });
 }
 
 function triggerReady() { 
-    document.getElementById('ready-btn').style.opacity = "0.5";
     document.getElementById('ready-btn').disabled = true;
     document.getElementById('ready-btn').innerText = "КҮТҮҮ...";
     sessionRef.child('sync/' + myRole).set(true); 
@@ -145,40 +125,24 @@ function startCountdown() {
     const timer = setInterval(() => {
         const cdDisplay = document.getElementById('countdown');
         if(cdDisplay) cdDisplay.innerText = c > 0 ? c : "АЛГА!";
-        if (c === 0) { 
-            clearInterval(timer); 
-            setTimeout(launch, 500); 
-        }
+        if (c === 0) { clearInterval(timer); setTimeout(launch, 500); }
         c--;
     }, 1000);
 }
 
-// --- ОЮНДУ БАШТОО (LAUNCH) ---
 function launch() {
     stopMenuMusic();
     playGameMusic();
     listenReactions();
-
-    const bVideo = document.getElementById('boyVideo');
-    const gVideo = document.getElementById('girlVideo');
-    if (bVideo && gVideo) {
-        bVideo.play();
-        gVideo.play();
-        bVideo.loop = true;
-        gVideo.loop = true;
-    }
-
+    document.getElementById('boyVideo').play();
+    document.getElementById('girlVideo').play();
     document.getElementById('sync-overlay').style.display = "none";
-    const gameField = document.getElementById('game-field');
-    const bottomUI = document.getElementById('ui-bottom');
-    
-    if(gameField) gameField.style.display = "block";
-    if(bottomUI) bottomUI.style.display = "flex";
-    
+    document.getElementById('game-field').style.display = "block";
+    document.getElementById('ui-bottom').style.display = "flex";
     renderGame();
 }
 
-// --- НЕГИЗГИ ОЮН ПРОЦЕССИ ---
+// --- НЕГИЗГИ ОЮН ПРОЦЕССИ ЖАНА РЕЙТИНГ ---
 function renderGame() {
     let qIdx = 0;
     let gameFinished = false;
@@ -186,20 +150,9 @@ function renderGame() {
     const currentQuestions = questions.slice(0, 30); 
 
     function showQ() {
-        if (gameFinished || qIdx >= currentQuestions.length) {
-            if (qIdx >= currentQuestions.length && !gameFinished) {
-                // Суроолор бүткөндө ким алдыда экенин текшерүү
-                sessionRef.child('pos').once('value', snapshot => {
-                    const p = snapshot.val();
-                    const bP = 5 + (p.boy || 0);
-                    const gP = 45 + (p.girl || 0);
-                    if (bP >= (gP - 2)) {
-                        checkWinner("Жигит кызга жетти! 🏇 Жигит утту!");
-                    } else {
-                        checkWinner("Кыз качып кетти! 🐎 Кыз утту!");
-                    }
-                });
-            }
+        if (gameFinished) return;
+        if (qIdx >= currentQuestions.length) {
+            checkWinner("УБАКЫТ БҮТТҮ: Кыз качып кетти! 🐎");
             return;
         }
         
@@ -218,45 +171,15 @@ function renderGame() {
             }
 
             optArea.innerHTML = "";
-
-            const emojiBar = document.createElement('div');
-            emojiBar.style.gridColumn = "1 / span 2";
-            emojiBar.style.display = "flex";
-            emojiBar.style.justifyContent = "center";
-            emojiBar.style.gap = "15px";
-            emojiBar.style.marginBottom = "10px";
-            ["😂", "🚀", "😎", "😜", "🔥"].forEach(e => {
-                const eb = document.createElement('span');
-                eb.innerText = e;
-                eb.style.fontSize = "24px";
-                eb.style.cursor = "pointer";
-                eb.onclick = (ev) => { ev.stopPropagation(); sendEmoji(e); };
-                emojiBar.appendChild(eb);
-            });
-            optArea.appendChild(emojiBar);
-
             q.a.forEach(txt => {
                 const b = document.createElement('button');
                 b.className = 'btn opt-btn'; 
                 b.innerText = txt;
                 b.onclick = () => {
                     if (currentTurn !== myRole) return;
-
-                    let moveStep = 0;
                     let isCorrect = (txt === q.c);
+                    let moveStep = isCorrect ? 3.5 : -1.5;
                     
-                    if (isCorrect) {
-                        moveStep = 3.5;
-                        document.getElementById('game-field').style.backgroundColor = "#d4edda";
-                    } else {
-                        moveStep = -1.5;
-                        document.getElementById('game-field').style.backgroundColor = "#f8d7da";
-                    }
-                    
-                    setTimeout(() => {
-                        document.getElementById('game-field').style.backgroundColor = "#ffffff";
-                    }, 400);
-
                     const nextTurn = myRole === "boy" ? "girl" : "boy";
                     sessionRef.update({
                         ['pos/' + myRole]: firebase.database.ServerValue.increment(moveStep),
@@ -279,18 +202,13 @@ function renderGame() {
     sessionRef.child('pos').on('value', s => {
         const p = s.val();
         if (p && !gameFinished) {
-            const boyPos = 5 + (p.boy || 0);
-            const girlPos = 45 + (p.girl || 0);
+            const bPos = 5 + (p.boy || 0);
+            const gPos = 45 + (p.girl || 0);
+            document.getElementById('boy-container').style.left = bPos + "%";
+            document.getElementById('girl-container').style.left = gPos + "%";
             
-            document.getElementById('boy-container').style.left = boyPos + "%";
-            document.getElementById('girl-container').style.left = girlPos + "%";
-            
-            if (boyPos >= (girlPos - 2)) {
-                checkWinner("Жигит кызга жетти! 🏇 Жигит утту!");
-            } 
-            else if (girlPos >= 95) {
-                checkWinner("Кыз качып кетти! 🐎 Кыз утту!");
-            }
+            if (bPos >= (gPos - 2)) checkWinner("ЖИГИТ КЫЗГА ЖЕТТИ! 🏇 Жигит утту!");
+            else if (gPos >= 95) checkWinner("КЫЗ КАЧЫП КЕТТИ! 🐎 Кыз утту!");
         }
     });
 
@@ -299,25 +217,21 @@ function renderGame() {
         gameFinished = true;
         sessionRef.child('pos').off();
         sessionRef.child('turn').off();
-        sessionRef.child('reactions').off();
-        
         document.getElementById('boyVideo').pause();
         document.getElementById('girlVideo').pause();
         
         const lb = document.getElementById('leaderboard-screen');
         lb.style.display = "flex";
         lb.innerHTML = `
-            <div style="background: white; padding: 40px; border-radius: 30px; text-align: center; color: #333; box-shadow: 0 15px 50px rgba(0,0,0,0.3); border: 4px solid #f1c40f;">
-                <h1 style="margin:0; color: #e67e22; font-size: 32px;">🏆 ОЮН АЯКТАДЫ</h1>
-                <h2 style="margin: 20px 0; color: #2c3e50;">${reason}</h2>
-                <div style="background: #f9f9f9; padding: 20px; border-radius: 15px; margin-bottom: 25px;">
-                    <h3 style="margin:0 0 10px 0; color: #7f8c8d;">РЕЙТИНГ</h3>
-                    <p style="font-size: 20px; margin: 5px 0;">🥇 <b>${reason.includes("Жигит утту") ? "Жигит" : "Кыз"}</b></p>
-                    <p style="font-size: 18px; margin: 5px 0; opacity: 0.6;">🥈 ${reason.includes("Жигит утту") ? "Кыз" : "Жигит"}</p>
+            <div style="background: white; padding: 40px; border-radius: 20px; text-align: center; border: 5px solid #f1c40f;">
+                <h1 style="color: #e67e22;">🏆 ЖЫЙЫНТЫК</h1>
+                <h2 style="margin: 20px 0;">${reason}</h2>
+                <div style="background: #eee; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                    <p><b>1-орун:</b> ${reason.includes("Жигит утту") ? "Жигит" : "Кыз"}</p>
+                    <p style="opacity: 0.6;"><b>2-орун:</b> ${reason.includes("Жигит утту") ? "Кыз" : "Жигит"}</p>
                 </div>
-                <button class="btn" style="background: linear-gradient(to right, #3498db, #2980b9); color: white; padding: 15px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; border: none; font-size: 18px;" onclick="location.reload()">БАШКЫ МЕНЮ</button>
+                <button class="btn" onclick="location.reload()" style="background: #3498db; color: white; padding: 10px 30px;">МЕНЮГА КАЙТУУ</button>
             </div>
         `;
-        setTimeout(() => { if(sessionRef) sessionRef.remove(); }, 600000);
     }
 }
