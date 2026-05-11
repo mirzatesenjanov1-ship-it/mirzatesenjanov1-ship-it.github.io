@@ -16,7 +16,7 @@ function playGameMusic() {
     if (gMusic) { gMusic.volume = 0.5; gMusic.play().catch(e => {}); }
 }
 
-// --- ЭМОЦИЯЛАР (ОҢДОЛГОН) ---
+// --- ЭМОЦИЯЛАР ---
 function sendEmoji(emoji) {
     if (!sessionRef) return;
     sessionRef.child('reactions').set({
@@ -127,7 +127,7 @@ function launch() {
     renderGame();
 }
 
-// --- ОЮНДУН ӨЗӨГҮ (ОҢДОЛГОН) ---
+// --- ОЮНДУН ӨЗӨГҮ ---
 function renderGame() {
     let qIdx = 0;
     let gameFinished = false;
@@ -146,19 +146,6 @@ function renderGame() {
 
             optArea.innerHTML = "";
             
-            // Эмоциялар панелин кошуу
-            const eBar = document.createElement('div');
-            eBar.style.cssText = "grid-column: 1/span 2; display: flex; justify-content: center; gap: 20px; margin-bottom: 10px;";
-            ["😂", "🚀", "🔥", "😎"].forEach(emoji => {
-                const span = document.createElement('span');
-                span.innerText = emoji;
-                span.style.cursor = "pointer";
-                span.style.fontSize = "30px";
-                span.onclick = () => sendEmoji(emoji);
-                eBar.appendChild(span);
-            });
-            optArea.appendChild(eBar);
-
             if (turn === myRole) {
                 optArea.classList.remove('disabled-overlay');
                 qText.innerText = q.q;
@@ -204,17 +191,30 @@ function renderGame() {
     function checkWinner(reason) {
         if (gameFinished) return;
         gameFinished = true;
+        
         sessionRef.child('pos').off();
         sessionRef.child('turn').off();
         
+        document.getElementById('boyVideo').pause();
+        document.getElementById('girlVideo').pause();
+        document.getElementById('ui-bottom').style.display = "none";
+
         const lb = document.getElementById('leaderboard-screen');
         lb.style.display = "flex";
-        lb.style.zIndex = "1000";
+        lb.style.zIndex = "9999";
+        lb.style.background = "rgba(0, 0, 0, 0.85)";
+
+        let winnerName = reason.includes("ЖЕТТИ") ? "ЖИГИТ" : "КЫЗ";
+
         lb.innerHTML = `
-            <div style="background: white; padding: 40px; border-radius: 20px; text-align: center;">
-                <h1 style="color: #e67e22;">ОЮН АЯКТАДЫ</h1>
-                <h2>${reason}</h2>
-                <button class="btn" style="background:#3498db; color:white;" onclick="location.reload()">МЕНЮГА КАЙТУУ</button>
+            <div style="background: white; padding: 30px; border-radius: 20px; text-align: center; border: 5px solid #f1c40f; width: 80%; max-width: 400px; box-shadow: 0 0 20px #f1c40f;">
+                <h1 style="color: #e67e22; margin: 0;">🏆 ЖЫЙЫНТЫК</h1>
+                <p style="font-size: 18px; margin: 15px 0; color: #333;">${reason}</p>
+                <hr>
+                <div style="margin: 20px 0; font-weight: bold;">
+                    <div style="font-size: 24px; color: #27ae60;">🥇 Жеңүүчү: ${winnerName}</div>
+                </div>
+                <button class="btn" onclick="location.reload()" style="background: #3498db; color: white; width: 100%; padding: 12px; font-size: 18px; cursor: pointer; border-radius: 10px; border: none;">МЕНЮГА КАЙТУУ</button>
             </div>
         `;
     }
