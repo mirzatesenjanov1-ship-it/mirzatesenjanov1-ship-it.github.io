@@ -889,7 +889,7 @@
 
   function renderGame() {
         let qIdx = 0;
-        let gameFinished = false; // Оюн аяктаганын көзөмөлдөө
+        let gameFinished = false; 
         const questions = allQuestions[selectedLevelIdx] || [{q:"Суроолор жок", a:["..."], c:"..."}];
 
         function showQ() {
@@ -907,7 +907,6 @@
                 b.className = 'btn'; b.innerText = txt;
                 b.onclick = () => {
                     if (txt === q.c) {
-                        // Туура жооп үчүн жылыш
                         sessionRef.child('pos/' + myRole).transaction(p => (p || 0) + (myRole === 'boy' ? 1.5 : 1.2));
                         b.classList.add('correct-flash');
                         setTimeout(() => { qIdx++; showQ(); }, 400);
@@ -921,7 +920,6 @@
         
         showQ();
 
-        // Позицияларды жана жеңүүчүнү реалдуу убакытта текшерүү
         sessionRef.child('pos').on('value', s => {
             const p = s.val();
             if (p && !gameFinished) {
@@ -931,7 +929,6 @@
                 document.getElementById('boy-container').style.left = boyPos + "%";
                 document.getElementById('girl-container').style.left = girlPos + "%";
 
-                // Утуу шарттары
                 if (boyPos >= girlPos) { 
                     checkWinner("Жигит кууп жетти!"); 
                 } else if (girlPos >= 85) { 
@@ -944,22 +941,17 @@
             if (gameFinished) return;
             gameFinished = true;
 
-            // Маалыматтарды алуу жана экранга чыгаруу
             sessionRef.child('players').once('value', pSnap => {
                 const names = pSnap.val();
                 sessionRef.child('pos').once('value', posSnap => {
                     const finalPos = posSnap.val() || {boy: 0, girl: 0};
-                    
-                    // Ким алдыда экенин аныктоо
                     const isBoyAhead = (finalPos.boy + 5) >= (finalPos.girl + 45);
                     const winnerName = isBoyAhead ? names.boy : names.girl;
 
-                    // Музыканы жана видеону токтотуу
                     document.getElementById('bgMusic').pause();
                     document.getElementById('v-boy').pause();
                     document.getElementById('v-girl').pause();
 
-                    // Лидербордду толтуруу
                     const screen = document.getElementById('leaderboard-screen');
                     screen.style.display = "flex";
                     screen.innerHTML = `
