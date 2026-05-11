@@ -34,7 +34,7 @@
         .level-btn:active { transform: translateY(2px); border-bottom: 2px solid #27ae60; }
 
         /* ОЮН ТАЛААСЫ - АППАК ФОН */
-        #game-field { position: relative; width: 100%; height: 100vh; background: #ffffff; display: none; }
+        #game-field { position: relative; width: 100%; height: 100vh; background: #ffffff; display: none; transition: background-color 0.4s; }
         
         /* ВИДЕОНУ ӨЙДӨРӨӨК АЛУУ (bottom: 45%) */
         .horse-container { 
@@ -64,6 +64,13 @@
         .flash-red { animation: flashR 0.6s ease; }
         @keyframes flashG { 0% { background: #ffffff; } 50% { background: #2ecc71; } 100% { background: #ffffff; } }
         @keyframes flashR { 0% { background: #ffffff; } 50% { background: #e74c3c; } 100% { background: #ffffff; } }
+
+        /* ЭМОЦИЯЛАР АНИМАЦИЯСЫ */
+        @keyframes floatUp {
+            0% { transform: translate(-50%, 0); opacity: 1; }
+            100% { transform: translate(-50%, -120px); opacity: 0; }
+        }
+        .emoji-pop { pointer-events: none; user-select: none; }
 
         .disabled-overlay { pointer-events: none; opacity: 0.6; }
 
